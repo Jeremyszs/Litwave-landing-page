@@ -1,0 +1,2524 @@
+<!doctype html>
+<!--
+  Open Design Web-Prototype Artifact: Litwave
+  Focus: Practice Workstation for Keyboardists (Built for Efficiency & Performance)
+  Design System: Pitch Black Hardware System (--bg: #000000, --surface: #07080c, --accent: #38bdf8)
+  Updates:
+    - Background: Random roaming white dot particles with an interactive "Anti-Dot Zone" around the cursor that repels and flings particles in the cursor's movement trajectory.
+    - Header: Removed "PRACTICE WORKSTATION" badge beside Litwave.
+    - Dropdown Trigger: Replaced text with clean 3-lines hamburger icon button.
+    - Dropdown Menu: Clean category links without numbers.
+    - Wheel/Touch Navigation: Manual scroll automatically triggers smooth, zoom-resilient category pagination snapping.
+    - Dual UI Visualizations (Main Studio & /remote) + Real measured benchmarks & specs + Real WAV soundpack samples.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Litwave — Practice Workstation for Keyboardists</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Open Design Pitch Black Tokens ────────────────────────────── */
+    :root {
+      --bg:      #000000;   /* Pure pitch black */
+      --surface: #07080c;   /* Rack modules, cards */
+      --elevated:#0e1117;   /* Hover states, control panels */
+      --sunken:  #040507;   /* Inner recesses, waveforms */
+      --fg:      #f8fafc;   /* High-contrast crisp text */
+      --muted:   #94a3b8;   /* Subtitles, secondary text */
+      --faint:   #475569;   /* Borders, hairline lines */
+      --border:  #171a23;   /* Primary dividers */
+      --border-strong: #293040;
+      --accent:  #38bdf8;   /* Studio cyan accent */
+
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --success:     #22c55e;
+      --warning:     #f59e0b;
+
+      --font-display: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-body:    'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono:    'Geist Mono', ui-monospace, monospace;
+
+      --fs-h1: clamp(38px, 5.2vw, 68px);
+      --fs-h2: clamp(26px, 3.2vw, 40px);
+      --fs-h3: 19px;
+      --fs-lead: clamp(15px, 1.7vw, 18px);
+      --fs-body: 15px;
+      --fs-meta: 12px;
+
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 20px;
+      --gap-lg: 32px;
+      --gap-xl: 48px;
+      --gap-2xl: 80px;
+      --container: 1160px;
+      --gutter: 24px;
+
+      --radius: 8px;
+      --radius-lg: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html {
+      -webkit-text-size-adjust: 100%;
+      background: var(--bg);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      line-height: 1.55;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      overflow-x: hidden;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; cursor: pointer; }
+    p { text-wrap: pretty; }
+    h1, h2, h3, h4 { text-wrap: balance; }
+
+    /* ─── Background Canvases: Roaming White Dots & Anti-Dot Spotlight ─── */
+    #dots-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #cursor-spotlight {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 30px; /* 15px radius = 30px diameter area */
+      height: 30px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.02) 70%, transparent 100%);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.18);
+      pointer-events: none;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s ease;
+    }
+
+    /* ─── Category Page-View Structure (1 Viewport per Category) ────── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: var(--container);
+      margin-inline: auto;
+      padding-inline: var(--gutter);
+      width: 100%;
+    }
+
+    .category-page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: clamp(60px, 8vh, 90px);
+    }
+
+    .stack { display: flex; flex-direction: column; }
+    .stack > * + * { margin-top: var(--gap-md); }
+    .row { display: flex; align-items: center; gap: var(--gap-md); }
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-md); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap-lg); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap-lg); }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap-md); }
+    .grid-1-2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: var(--gap-xl); align-items: start; }
+
+    @media (max-width: 920px) {
+      .grid-2, .grid-3, .grid-4, .grid-1-2 { grid-template-columns: 1fr; gap: var(--gap-md); }
+      .category-page { min-height: auto; padding-block: 56px; }
+    }
+
+    /* Typography */
+    .h1, h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; line-height: 1.05; letter-spacing: -0.04em; margin: 0; }
+    .h2, h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; line-height: 1.15; letter-spacing: -0.025em; margin: 0; }
+    .h3, h3 { font-size: var(--fs-h3); font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; margin: 0; }
+    .lead   { font-size: var(--fs-lead); line-height: 1.6; color: var(--muted); max-width: 64ch; margin: 0; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 var(--gap-md);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .eyebrow-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .meta { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--muted); }
+    .num  { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+    /* ─── Floating Liquid Glass Header ──────────────────────────────── */
+    .topnav-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      padding-top: 18px;
+      padding-inline: 24px;
+      transition: padding 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .topnav {
+      width: 100%;
+      max-width: 960px; /* Centered with side margins at top */
+      border-radius: 9999px;
+      background: transparent;
+      border: 1px solid transparent;
+      outline: none;
+      box-shadow: none;
+      transition: max-width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+
+    .topnav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 28px;
+      white-space: nowrap;
+      transition: padding 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                  gap 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Animated Morph into Floating Liquid Glass Popout Capsule when scrolled */
+    .topnav-wrap.scrolled {
+      padding-top: 12px;
+      padding-inline: 16px;
+    }
+    .topnav-wrap.scrolled .topnav {
+      width: fit-content;
+      max-width: min(94vw, 860px);
+      background: rgba(8, 10, 15, 0.38); /* Translucent liquid glass */
+      backdrop-filter: blur(20px) saturate(190%);
+      -webkit-backdrop-filter: blur(20px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.65),
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+                  0 0 24px rgba(56, 189, 248, 0.06);
+    }
+    .topnav-wrap.scrolled .topnav-inner {
+      padding: 7px 18px;
+      gap: 28px; /* Distinct visual breath between Litwave title and navigation items */
+    }
+
+    .topnav .brand-name {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .topnav-wrap.scrolled .brand-name {
+      font-size: 16px;
+      padding-right: 4px; /* Extra separation anchor */
+    }
+
+    /* Direct header links (single row, smoothly compresses when popout is active) */
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 1;
+      transition: gap 0.3s ease;
+    }
+    .topnav-wrap.scrolled .header-nav {
+      gap: 11px;
+    }
+    .header-nav a {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: color 0.15s ease, font-size 0.3s ease;
+    }
+    .topnav-wrap.scrolled .header-nav a {
+      font-size: 12px;
+    }
+    .header-nav a:hover {
+      color: #ffffff;
+    }
+    .nav-dl-pill {
+      color: var(--accent) !important;
+      font-weight: 700 !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 11.5px !important;
+      transition: all 0.2s ease;
+    }
+    .nav-dl-pill:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #ffffff !important;
+    }
+
+    .nav-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .nav-drop-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+    .nav-drop-btn:hover,
+    .nav-dropdown.open .nav-drop-btn {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-drop-btn svg {
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-dropdown.open .nav-drop-btn svg {
+      transform: rotate(180deg);
+    }
+    .nav-drop-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      background: rgba(10, 13, 18, 0.88);
+      backdrop-filter: blur(20px) saturate(190%);
+      -webkit-backdrop-filter: blur(20px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 6px;
+      min-width: 155px;
+      box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.85),
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px) scale(0.96);
+      transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.24s;
+      pointer-events: none;
+    }
+    .nav-dropdown.open .nav-drop-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .nav-drop-menu a {
+      padding: 7px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .nav-drop-menu a:hover {
+      background: rgba(56, 189, 248, 0.14);
+      color: #ffffff;
+    }
+
+    @media (max-width: 720px) {
+      .header-nav a:nth-child(2), /* Visuals */
+      .header-nav a:nth-child(4)  /* Specs */
+      { display: none; }
+      .topnav-wrap { padding-inline: 10px; }
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: #e2e8f0;
+      box-shadow: 0 0 24px rgba(255, 255, 255, 0.25);
+    }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--fg);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-strong);
+      background: var(--elevated);
+      color: #ffffff;
+    }
+    .btn-accent {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .btn-accent:hover {
+      background: rgba(56, 189, 248, 0.24);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .btn-arrow::after { content: '→'; transition: transform 0.15s ease; }
+    .btn-arrow:hover::after { transform: translateX(3px); }
+
+    /* Category 1: Hero */
+    .hero-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .hero-center h1 span {
+      background: linear-gradient(135deg, #ffffff 45%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-center .lead {
+      margin-top: 20px;
+      margin-bottom: 36px;
+    }
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* Category 2: UI Visualizations */
+    .view-toggle-bar {
+      display: inline-flex;
+      background: var(--sunken);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 20px;
+    }
+    .view-toggle-btn {
+      padding: 6px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      transition: all 0.15s ease;
+    }
+    .view-toggle-btn.active {
+      background: var(--elevated);
+      color: #ffffff;
+      border: 1px solid var(--border-strong);
+    }
+
+    .studio-mockup-frame {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 32px 80px -20px rgba(0, 0, 0, 0.95);
+      text-align: left;
+    }
+    .mockup-topbar {
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .mockup-dots { display: flex; gap: 6px; }
+    .mockup-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 2.2fr 1fr;
+      gap: 16px;
+      padding: 20px;
+      background: var(--sunken);
+    }
+    @media (max-width: 860px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    .studio-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .studio-panel-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .timeline-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .chord-pill {
+      min-width: 84px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .chord-pill.playing {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 14px var(--accent-glow);
+    }
+    .chord-pill .root-name {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .chord-pill.playing .root-name { color: var(--accent); }
+    .chord-pill .nash-code {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .fader-deck {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .fader-col {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .fader-slot {
+      height: 52px;
+      background: var(--sunken);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .fader-val {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, var(--accent) 0%, #1e40af 100%);
+      opacity: 0.85;
+    }
+
+    .remote-mockup-frame {
+      display: none;
+      max-width: 440px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 2px solid var(--border-strong);
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.95);
+      text-align: center;
+    }
+    .remote-hud {
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .remote-big-chord {
+      font-family: var(--font-mono);
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      padding: 18px 0;
+      border-radius: 12px;
+      background: var(--sunken);
+      border: 1px solid var(--border);
+      box-shadow: inset 0 0 24px rgba(56, 189, 248, 0.1);
+    }
+    .remote-big-chord span {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Category 3: Sound Lab */
+    .lab-box {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 32px 80px -20px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+      text-align: left;
+    }
+    .lab-header {
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .lab-body {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 24px;
+      background: #000000;
+    }
+    @media (max-width: 860px) {
+      .lab-body { grid-template-columns: 1fr; }
+    }
+
+    .drone-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .drone-key {
+      height: 48px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+    .drone-key span {
+      font-size: 9px;
+      color: var(--faint);
+      font-weight: 400;
+    }
+    .drone-key:hover {
+      border-color: var(--border-strong);
+      background: #151922;
+      transform: translateY(-1px);
+    }
+    .drone-key.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: inset 0 0 16px rgba(56, 189, 248, 0.22);
+    }
+
+    .sampler-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .sampler-btn {
+      aspect-ratio: 1;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--fg);
+      user-select: none;
+      transition: all 0.08s ease;
+    }
+    .sampler-btn span {
+      font-size: 8px;
+      color: var(--faint);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .sampler-btn:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+    .sampler-btn:active, .sampler-btn.hit {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      transform: scale(0.95);
+      box-shadow: 0 0 24px rgba(255, 255, 255, 0.5);
+    }
+    .sampler-btn.hit span { color: #222222; }
+
+    .oscilloscope-box {
+      height: 72px;
+      background: #020304;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    #scope-canvas { width: 100%; height: 100%; display: block; }
+
+    /* Category 4: Specs & Benchmarks */
+    .stat .stat-num {
+      font-family: var(--font-display);
+      font-size: clamp(44px, 5.5vw, 68px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .stat .stat-label {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .stat .stat-unit { font-size: 0.55em; opacity: 0.75; margin-left: 2px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+    .feature .feature-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--elevated);
+      color: var(--accent);
+      margin-bottom: var(--gap-md);
+    }
+    .feature .feature-mark svg { width: 20px; height: 20px; }
+    .feature h3 { margin-bottom: 8px; color: #ffffff; }
+    .feature p  { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+
+    /* Category 5: Docs & Setup */
+    .doc-nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .doc-nav-btn {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      background: transparent;
+      border: 1px solid transparent;
+      text-align: left;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s ease;
+    }
+    .doc-nav-btn:hover { color: #ffffff; background: var(--surface); }
+    .doc-nav-btn.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .doc-pane {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      min-height: 380px;
+    }
+    .doc-content-tab { display: none; animation: fadeIn 0.18s ease; }
+    .doc-content-tab.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      margin-top: 14px;
+    }
+    .ds-table th {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-strong);
+      color: var(--faint);
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.05em;
+    }
+    .ds-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--fg);
+    }
+    .ds-table tr:hover td { background: var(--elevated); }
+    .ds-table .accent-cell { color: var(--accent); font-weight: 600; }
+
+    .code-term {
+      background: #020304;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: #ffffff;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+    .code-term .cm { color: var(--faint); }
+    .code-term .kw { color: var(--accent); font-weight: 600; }
+
+    .pagefoot {
+      padding-block: 16px; /* Ultra-compact height */
+      color: var(--muted);
+      font-size: 12.5px;
+      border-top: 1px solid var(--border);
+    }
+    .pagefoot .brand-foot { font-weight: 800; color: #ffffff; font-size: 15px; letter-spacing: -0.03em; }
+    .github-credit-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      transition: color 0.15s ease;
+    }
+    .github-credit-link:hover {
+      color: #ffffff;
+    }
+    .github-credit-link svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Roaming White Dots Canvas with Anti-Dot Cursor Repulsor -->
+  <canvas id="dots-canvas"></canvas>
+
+  <!-- Cursor Spotlight Overlay -->
+  <div id="cursor-spotlight"></div>
+
+  <!-- Floating Liquid Glass Popout Header (Direct Short Titles) -->
+  <div class="topnav-wrap" id="topnav-wrap">
+    <header class="topnav">
+      <div class="topnav-inner">
+        <div class="brand-name" onclick="scrollSection('cat-overview')">
+          Litwave
+        </div>
+
+        <nav class="header-nav">
+          <a href="#cat-overview">Overview</a>
+          <a href="#cat-visuals">Visuals</a>
+          <a href="#cat-lab">Sound Lab</a>
+          <a href="#cat-specs">Specs</a>
+          <a href="#cat-quickstart">Get Started</a>
+          <div class="nav-dropdown" id="navDropdown">
+            <button class="nav-drop-btn" id="navDropBtn" onclick="toggleNavDropdown(event)">
+              <span>More</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="nav-drop-menu" id="navDropMenu">
+              <a href="#cat-ear-training" onclick="closeNavDropdown()">Ear Training</a>
+              <a href="#cat-dsp-setlist" onclick="closeNavDropdown()">DSP &amp; Setlist</a>
+              <a href="#cat-features" onclick="closeNavDropdown()">Features</a>
+              <a href="#cat-docs" onclick="closeNavDropdown()">Docs &amp; API</a>
+            </div>
+          </div>
+          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Portable-Windows-x64.zip" class="nav-dl-pill" title="Download Litwave v0.1.0 for Windows (Portable .zip)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>v0.1.0</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+  </div>
+
+  <main id="content">
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 1: OVERVIEW & THESIS
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-overview" class="category-page" data-od-id="hero">
+      <div class="container hero-center">
+        <h1>
+          The Practice Workstation Built for <span>Keyboardists</span>.
+        </h1>
+        <p class="lead">
+          Built strictly for practice efficiency and performance. Automated MIR harmonic chord extraction,
+          sample-accurate loop scrubbing, an ambient drone foundation for ear training, and zero-distraction telemetry.
+        </p>
+        <div class="hero-cta">
+          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Portable-Windows-x64.zip" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download Litwave v0.1.0</span>
+            <span style="font-size: 11px; opacity: 0.75; font-family: var(--font-mono); font-weight: 500;">(241 MB .zip)</span>
+          </a>
+          <button class="btn btn-secondary" onclick="scrollSection('cat-visuals')">Explore UI Visualizations</button>
+          <button class="btn btn-accent btn-arrow" onclick="scrollSection('cat-specs')">Benchmarks &amp; Specs</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 2: DUAL UI VISUALIZATIONS
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-visuals" class="category-page" data-od-id="ui-visualizations">
+      <div class="container" style="text-align: center;">
+        <div style="max-width: 48ch; margin: 0 auto 20px;">
+          <h2>Dual-Surface Practice Architecture</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Seamless parity between the desktop studio workstation and the mobile music stand remote.
+          </p>
+        </div>
+
+        <div class="view-toggle-bar">
+          <button class="view-toggle-btn active" id="btn-view-studio" onclick="switchView('studio')">Desktop Studio View</button>
+          <button class="view-toggle-btn" id="btn-view-remote" onclick="switchView('remote')">Mobile Stage Remote (/remote)</button>
+        </div>
+
+        <!-- 1. Main Studio Desktop View -->
+        <div id="view-studio" class="studio-mockup-frame">
+          <div class="mockup-topbar">
+            <div class="mockup-dots"><span></span><span></span><span></span></div>
+            <span style="font-weight: 700; color: #ffffff;">LITWAVE STUDIO &bull; LOCALHOST:8080</span>
+            <span>ENGINE: C++ NATIVE &bull; 44.1 kHz</span>
+          </div>
+          <div class="studio-grid">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="studio-panel">
+                <div class="studio-panel-title">
+                  <span>MIR Harmonic Timeline &bull; Nashville System</span>
+                  <span style="color: var(--accent);">BAR 24.1 &bull; 72 BPM</span>
+                </div>
+                <div class="timeline-strip">
+                  <div class="chord-pill"><div class="root-name">Cmaj9</div><div class="nash-code">1 (Tonic)</div></div>
+                  <div class="chord-pill playing"><div class="root-name">G/B</div><div class="nash-code">5/7</div></div>
+                  <div class="chord-pill"><div class="root-name">Am7</div><div class="nash-code">6m</div></div>
+                  <div class="chord-pill"><div class="root-name">Fsus2</div><div class="nash-code">4sus2</div></div>
+                  <div class="chord-pill"><div class="root-name">Dm9</div><div class="nash-code">2m9</div></div>
+                </div>
+              </div>
+              <div class="studio-panel">
+                <div class="studio-panel-title">
+                  <span>Multi-Part Practice Mix Bus</span>
+                  <span>PRESET: RHODES + WARM PAD</span>
+                </div>
+                <div class="fader-deck">
+                  <div class="fader-col">
+                    <span style="color: #fff;">CFX Piano</span>
+                    <div class="fader-slot"><div class="fader-val" style="height: 82%;"></div></div>
+                    <span>-3.2 dB</span>
+                  </div>
+                  <div class="fader-col">
+                    <span style="color: #fff;">Warm Pad</span>
+                    <div class="fader-slot"><div class="fader-val" style="height: 68%;"></div></div>
+                    <span>-6.0 dB</span>
+                  </div>
+                  <div class="fader-col">
+                    <span style="color: #fff;">DX Rhodes</span>
+                    <div class="fader-slot"><div class="fader-val" style="height: 74%;"></div></div>
+                    <span>-4.5 dB</span>
+                  </div>
+                  <div class="fader-col">
+                    <span style="color: #fff;">Metronome</span>
+                    <div class="fader-slot"><div class="fader-val" style="height: 50%;"></div></div>
+                    <span>-12 dB</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="studio-panel" style="justify-content: space-between;">
+              <div class="studio-panel-title">
+                <span>Ear Training Foundation</span>
+                <span style="color: var(--success);">&#x25CF; LOCKED G</span>
+              </div>
+              <div style="background: var(--sunken); padding: 18px; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
+                <div style="font-size: 11px; font-family: var(--font-mono); color: var(--faint);">ACTIVE ROOT KEY</div>
+                <div style="font-size: 48px; font-weight: 800; font-family: var(--font-mono); color: var(--accent);">G</div>
+                <div style="font-size: 12px; font-family: var(--font-mono); color: var(--muted);">SUB-BUS 0x98 / CONTINUOUS</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+                A/B LOOP: <b style="color: #ffffff;">00:32.40 &rarr; 00:48.00</b> (REPEATING)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Mobile Remote App View (/remote) -->
+        <div id="view-remote" class="remote-mockup-frame">
+          <div class="remote-hud">
+            <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+              <span>LITWAVE REMOTE</span>
+              <span style="color: var(--success);">&#x25CF; WS CONNECTED</span>
+            </div>
+
+            <div>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--faint); text-transform: uppercase; margin-bottom: 6px;">
+                Current Bar Chord
+              </div>
+              <div class="remote-big-chord">
+                G/B
+                <span>NASHVILLE: 5/7</span>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 10px;">
+                NEXT: Am7 &rarr; Fsus2
+              </div>
+            </div>
+
+            <div>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--faint); text-transform: uppercase; margin-bottom: 8px; text-align: left;">
+                Thumb Drone Selector
+              </div>
+              <div class="drone-grid">
+                <div class="drone-key" style="height: 38px;">C</div>
+                <div class="drone-key" style="height: 38px;">D</div>
+                <div class="drone-key" style="height: 38px;">E</div>
+                <div class="drone-key" style="height: 38px;">F</div>
+                <div class="drone-key active" style="height: 38px;">G</div>
+                <div class="drone-key" style="height: 38px;">A</div>
+                <div class="drone-key" style="height: 38px;">Bb</div>
+                <div class="drone-key" style="height: 38px;">B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 3: INTERACTIVE SOUND LAB (WAV SAMPLES)
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-lab" class="category-page" data-od-id="playable-lab">
+      <div class="container">
+        <div style="max-width: 48ch; margin-bottom: 24px;">
+          <h2>Synthesizer &amp; Real Sound Samples</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            The pads below trigger uncompressed WAV samples loaded directly from the Litwave DAW soundpack (`assets/fx-pads/`).
+          </p>
+        </div>
+
+        <div class="lab-box">
+          <div class="lab-header">
+            <div class="row">
+              <span style="color: #ffffff; font-weight: 700;">LITWAVE AUDIO TEST RIG</span>
+              <span>SAMPLER: <b>WAV DIRECT LOAD</b></span>
+              <span>BUFFER: <b>64 SPLS</b></span>
+            </div>
+            <div class="row" style="color: var(--success); font-weight: 600;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success);"></span>
+              <span>REAL REPO WAV ASSETS LOADED</span>
+            </div>
+          </div>
+
+          <div class="lab-body">
+            <!-- Drone Pad Matrix -->
+            <div class="studio-panel">
+              <div class="studio-panel-title">
+                <span>Ambient Drone Sub-bus (Harmonic Anchor)</span>
+                <button onclick="stopDrone()" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; font-size: 9.5px; font-family: var(--font-mono); font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Stop Drone Pad">
+                  <span style="width: 5px; height: 5px; background: #f87171; border-radius: 1px;"></span>
+                  <span>MUTE / STOP</span>
+                </button>
+              </div>
+              <p style="font-size: 12px; color: var(--muted);">
+                Multi-oscillator worship pad. Click any note to toggle ON/OFF (or click MUTE/STOP):
+              </p>
+              <div class="drone-grid">
+                <button class="drone-key" onclick="playDrone('C', 130.81, this)">C<span>1</span></button>
+                <button class="drone-key" onclick="playDrone('D', 146.83, this)">D<span>2</span></button>
+                <button class="drone-key" onclick="playDrone('E', 164.81, this)">E<span>3</span></button>
+                <button class="drone-key" onclick="playDrone('F', 174.61, this)">F<span>4</span></button>
+                <button class="drone-key" onclick="playDrone('G', 196.00, this)">G<span>5</span></button>
+                <button class="drone-key" onclick="playDrone('A', 220.00, this)">A<span>6</span></button>
+                <button class="drone-key" onclick="playDrone('Bb', 233.08, this)">Bb<span>b7</span></button>
+                <button class="drone-key" onclick="playDrone('B', 246.94, this)">B<span>7</span></button>
+              </div>
+              <div class="oscilloscope-box">
+                <canvas id="scope-canvas"></canvas>
+              </div>
+            </div>
+
+            <!-- MPC 8-Pad Sampler: Real WAV samples -->
+            <div class="studio-panel">
+              <div class="studio-panel-title">
+                <span>MPC Sampler &bull; Real Soundpack WAVs</span>
+                <span style="color: var(--muted);">CLICK / TOUCH</span>
+              </div>
+              <p style="font-size: 12px; color: var(--muted);">
+                Audition authentic studio percussion and transition hits from the app library:
+              </p>
+              <div class="sampler-grid">
+                <button class="sampler-btn" onclick="playSampleFile('kick', this)">P1<span>Sub Kick</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('snare', this)">P2<span>Wide Snare</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('shaker', this)">P3<span>Shaker</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('swell', this)">P4<span>Cymbal Swell</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('clap', this)">P5<span>Stadium Clap</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('chime', this)">P6<span>Sparkle Chime</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('tape_drop', this)">P7<span>Tape Stop</span></button>
+                <button class="sampler-btn" onclick="playSampleFile('sub_drop', this)">P8<span>Sub Boom</span></button>
+              </div>
+              <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--faint); padding-top: 4px;">
+                <span>FORMAT: 16-BIT 48kHz WAV</span>
+                <span style="color: var(--accent);">LATENCY: &lt; 1MS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 4: EAR TRAINING & HUMANIZED VOICING SIMULATOR (FEATURE 1)
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-ear-training" class="category-page" data-od-id="ear-training">
+      <div class="container">
+        <div style="max-width: 52ch; margin-bottom: 24px;">
+          <h2>Humanized Keyboard Voicing Engine</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Simulates authentic open-spread keyboard voicings with deep bass fundamentals and micro-strum randomized timing (12–22ms). Practice identifying rich chord colors:
+          </p>
+        </div>
+
+        <div class="lab-box">
+          <div class="lab-header">
+            <div class="row">
+              <span style="color: #ffffff; font-weight: 700;">VOICING GENERATOR</span>
+              <span>UDP TARGET: <b>127.0.0.1:9123</b></span>
+              <span>MODE: <b>OPEN SPREAD</b></span>
+            </div>
+            <span style="color: var(--accent); font-family: var(--font-mono); font-size: 11px;">MICRO-TIMING STRUM: ACTIVE</span>
+          </div>
+
+          <div class="lab-body">
+            <!-- Voicing Palette -->
+            <div class="studio-panel">
+              <div class="studio-panel-title">
+                <span>Select Chord Voicing Color</span>
+                <span style="color: var(--accent);">ROOT: C</span>
+              </div>
+              <p style="font-size: 12px; color: var(--muted);">
+                Click any open voicing to audition real multi-note harmony with randomized velocity and subtle roll:
+              </p>
+              <div class="grid-2" style="gap: 8px;">
+                <button class="drone-key" style="height: 52px;" onclick="playVoicingChord('Cmaj9', 48, [0, 4, 7, 11, 14], this)">
+                  Cmaj9
+                  <span>1 - 3 - 5 - 7 - 9</span>
+                </button>
+                <button class="drone-key" style="height: 52px;" onclick="playVoicingChord('Cm11', 48, [0, 3, 7, 10, 14, 17], this)">
+                  Cm11
+                  <span>1 - b3 - 5 - b7 - 9 - 11</span>
+                </button>
+                <button class="drone-key" style="height: 52px;" onclick="playVoicingChord('C7alt', 48, [0, 4, 10, 13, 16], this)">
+                  C7 (b9 / #9 / b13)
+                  <span>Altered Dominant</span>
+                </button>
+                <button class="drone-key" style="height: 52px;" onclick="playVoicingChord('Csus4add9', 48, [0, 5, 7, 10, 14], this)">
+                  C9sus4
+                  <span>Gospel / Worship Open 9sus</span>
+                </button>
+              </div>
+
+              <div id="voicing-display" style="background: var(--sunken); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between;">
+                <span>VOICING: <b id="voicing-name" style="color: #ffffff;">Cmaj9</b></span>
+                <span>NOTES: <b id="voicing-notes" style="color: var(--accent);">C2 + E4 G4 B4 D5</b></span>
+              </div>
+            </div>
+
+            <!-- Ear Training Practice Exercises -->
+            <div class="studio-panel" style="justify-content: space-between;">
+              <div class="studio-panel-title">
+                <span>Ear Training Modules</span>
+                <span style="color: var(--success);">&#x25CF; INTEGRATED</span>
+              </div>
+              <div class="stack" style="gap: 10px;">
+                <div style="background: var(--sunken); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+                  <div style="font-weight: 700; color: #ffffff; font-size: 13px;">1. Chord Quality Discrimination</div>
+                  <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Blind test identifying Triads &rarr; Major 7ths &rarr; Altered 13ths.</div>
+                </div>
+                <div style="background: var(--sunken); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+                  <div style="font-weight: 700; color: #ffffff; font-size: 13px;">2. Nashville Harmonic Progressions</div>
+                  <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Listen to multi-bar chord changes (ii - V - I, 1 - 5 - 6 - 4) and map numbers.</div>
+                </div>
+                <div style="background: var(--sunken); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+                  <div style="font-weight: 700; color: #ffffff; font-size: 13px;">3. Melodic Call &amp; Response</div>
+                  <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Litwave plays a synth lick; play it back on your CASIO/MIDI keyboard.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 5: MASTER DSP & SETLIST SNAPSHOTS (FEATURES 3 & 4)
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-dsp-setlist" class="category-page" data-od-id="dsp-setlist">
+      <div class="container">
+        <div style="max-width: 52ch; margin-bottom: 24px;">
+          <h2>Analog Warmth DSP &amp; Instant Setlists</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Hardware-modeled tube saturation drive paired with instant sub-5ms patch switching across rehearsal setlists.
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <!-- Master DSP Panel -->
+          <div class="card">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff;">Stage Warmth DSP &amp; 96-Band FFT</h3>
+              <span class="meta" style="color: var(--accent);">C++ DSP CORE</span>
+            </div>
+            <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 16px;">
+              Simulates smooth analog harmonic saturation. The 96-band spectrum analyzer automatically idles when hidden to preserve 100% CPU for real-time audio.
+            </p>
+
+            <div style="background: var(--sunken); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+              <div class="row-between">
+                <span style="font-family: var(--font-mono); font-size: 12px; color: #ffffff;">WARMTH SATURATION DRIVE</span>
+                <span id="warmth-val" style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);">1.8x TUBE</span>
+              </div>
+              <input type="range" min="1.0" max="3.0" step="0.1" value="1.8" oninput="updateWarmthDrive(this.value)" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+
+              <!-- Live 96-Band Spectrum Analyzer Canvas -->
+              <div style="height: 64px; background: #000000; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative;">
+                <canvas id="dsp-spectrum-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                <span style="position: absolute; top: 4px; right: 8px; font-family: var(--font-mono); font-size: 9px; color: var(--faint);">96-BAND FFT &bull; REAL-TIME</span>
+              </div>
+              
+              <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px;">
+                <span>SPECTRUM BINS: <b>96 BANDS (0x54435053)</b></span>
+                <span style="color: var(--success);">&#x25CF; UDP TELEMETRY</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Setlist & Scene Snapshot Panel -->
+          <div class="card">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff;">Rehearsal Setlists &amp; Scenes</h3>
+              <span class="meta" style="color: var(--accent);">&lt; 5MS RECALL</span>
+            </div>
+            <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 16px;">
+              Store complete 8-part mixer snapshots (volumes, pan, cutoffs, reverb sends, and patch assignments) for instant one-touch recalls:
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+              <button class="drone-key active" style="height: 46px; text-align: left; padding: 8px 12px; align-items: flex-start;" onclick="selectScenePreset('Scene 1: Worship Main', this)">
+                SCENE 1: MAIN PIANO
+                <span style="color: var(--accent);">CFX Piano + Ambient Pad</span>
+              </button>
+              <button class="drone-key" style="height: 46px; text-align: left; padding: 8px 12px; align-items: flex-start;" onclick="selectScenePreset('Scene 2: Ballad Rhodes', this)">
+                SCENE 2: RHODES DRIVE
+                <span>DX Rhodes + Chorus Send</span>
+              </button>
+              <button class="drone-key" style="height: 46px; text-align: left; padding: 8px 12px; align-items: flex-start;" onclick="selectScenePreset('Scene 3: Layered Strings', this)">
+                SCENE 3: ORCH LAYER
+                <span>Seattle Strings + Reverb</span>
+              </button>
+              <button class="drone-key" style="height: 46px; text-align: left; padding: 8px 12px; align-items: flex-start;" onclick="selectScenePreset('Scene 4: Uplift Synth Lead', this)">
+                SCENE 4: SYNTH CLIMAX
+                <span>Filtered Saw Lead + Drone</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 6: BENCHMARKS & PC HARDWARE SPECIFICATIONS
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-specs" class="category-page" data-od-id="pc-specs">
+      <div class="container">
+        <div style="max-width: 54ch; margin-bottom: 24px;">
+          <h2>Performance &amp; Hardware Requirements</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Measured directly on the native Python 3.11 + Miniaudio + C++ audio engine execution stack.
+          </p>
+        </div>
+
+        <!-- Real-Time Performance Gauge Meter & Buffer Engine -->
+        <div class="card" style="margin-bottom: 24px; padding: 20px; background: var(--sunken); border-color: var(--border-strong);">
+          <div class="row-between" style="margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #ffffff;">LIVE PROCESS DYNAMICS</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+              BUFFER STABILITY: <b style="color: var(--success);">100% (ZERO OVERRUNS)</b>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+            <!-- Gauge 1: Boot Time -->
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px;">
+              <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 8px;">
+                <span>IMPORT SPEED</span>
+                <span id="perf-import-val" style="color: var(--accent); font-weight: 700;">93.1 ms</span>
+              </div>
+              <div style="height: 6px; background: #000000; border-radius: 3px; overflow: hidden;">
+                <div id="perf-import-bar" style="height: 100%; width: 93%; background: linear-gradient(90deg, var(--accent), #60a5fa); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 6px;">Sub-100ms cold import</div>
+            </div>
+
+            <!-- Gauge 2: Active RSS Memory -->
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px;">
+              <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 8px;">
+                <span>ACTIVE MEMORY (RSS)</span>
+                <span id="perf-mem-val" style="color: var(--accent); font-weight: 700;">139.4 MB</span>
+              </div>
+              <div style="height: 6px; background: #000000; border-radius: 3px; overflow: hidden;">
+                <div id="perf-mem-bar" style="height: 100%; width: 28%; background: linear-gradient(90deg, var(--accent), #22c55e); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 6px;">&lt; 3.5% of 4GB system RAM</div>
+            </div>
+
+            <!-- Gauge 3: Hardware Audio Latency -->
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px;">
+              <div class="row-between" style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 8px;">
+                <span>AUDIO LATENCY</span>
+                <span id="perf-lat-val" style="color: var(--accent); font-weight: 700;">5.80 ms</span>
+              </div>
+              <div style="height: 6px; background: #000000; border-radius: 3px; overflow: hidden;">
+                <div id="perf-lat-bar" style="height: 100%; width: 18%; background: linear-gradient(90deg, var(--success), var(--accent)); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 6px;">256 frames @ 44.1kHz buffer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff;">Minimum Workstation Spec</h3>
+              <span class="meta" style="color: var(--muted);">PORTABLE REHEARSAL</span>
+            </div>
+            <table class="ds-table" style="margin-top: 0;">
+              <tr><td class="accent-cell">Processor</td><td>Intel Core i3 8th Gen / AMD Ryzen 3 (4 Cores, 2.4 GHz+)</td></tr>
+              <tr><td class="accent-cell">System RAM</td><td>4 GB DDR4 (Application requires ~140 MB RSS)</td></tr>
+              <tr><td class="accent-cell">Audio Card</td><td>Standard WASAPI / DirectSound audio interface</td></tr>
+              <tr><td class="accent-cell">Operating System</td><td>Windows 10/11 64-bit or Linux (Kernel 5.15+)</td></tr>
+              <tr><td class="accent-cell">Storage</td><td>500 MB free disk space for core engine + soundpack</td></tr>
+            </table>
+          </div>
+
+          <div class="card" style="border-color: var(--border-strong);">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff;">Recommended Studio Spec</h3>
+              <span class="meta" style="color: var(--accent);">STUDIO PRODUCTION</span>
+            </div>
+            <table class="ds-table" style="margin-top: 0;">
+              <tr><td class="accent-cell">Processor</td><td>Intel Core i5/i7 11th Gen+ / AMD Ryzen 5 5600+ (6+ Cores)</td></tr>
+              <tr><td class="accent-cell">System RAM</td><td>8 GB – 16 GB DDR4/DDR5</td></tr>
+              <tr><td class="accent-cell">Audio Card</td><td>Dedicated ASIO Soundcard (Yamaha, Focusrite, NUX)</td></tr>
+              <tr><td class="accent-cell">Operating System</td><td>Windows 11 64-bit (Native WASAPI Exclusive / ASIO)</td></tr>
+              <tr><td class="accent-cell">Storage</td><td>2 GB SSD space for rapid sample caching &amp; offline MIR</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         GET STARTED & GEAR COMPATIBILITY
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-quickstart" class="category-page" data-od-id="quickstart">
+      <div class="container stack" style="gap: 32px;">
+        <div style="max-width: 52ch;">
+          <h2>Instant 3-Step Setup &amp; Hardware Compatibility</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Zero install wizards or administrative privileges required. Built for plug-and-play rehearsals.
+          </p>
+        </div>
+
+        <!-- 3-Step Execution Cards -->
+        <div class="grid-3">
+          <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; border-color: var(--border-strong);">
+            <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent);">STEP 01</div>
+            <h3 style="color: #ffffff; font-size: 17px;">Download &amp; Extract</h3>
+            <p style="color: var(--muted); font-size: 13px; line-height: 1.5;">
+              Download the self-contained portable release (~240 MB). Unpack the folder to any drive or USB flash disk. No registry edits.
+            </p>
+            <div style="margin-top: auto; padding-top: 8px;">
+              <code style="font-size: 11px; color: var(--accent); font-family: var(--font-mono); background: var(--sunken); padding: 4px 8px; border-radius: 4px; display: inline-block;">Litwave-Portable-Windows-x64.zip</code>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; border-color: var(--border-strong);">
+            <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent);">STEP 02</div>
+            <h3 style="color: #ffffff; font-size: 17px;">Connect Your Gear</h3>
+            <p style="color: var(--muted); font-size: 13px; line-height: 1.5;">
+              Plug in your CASIO, Yamaha, Roland, or NUX USB-MIDI keyboard and soundcard. Litwave auto-detects hardware with 1:1 input.
+            </p>
+            <div style="margin-top: auto; padding-top: 8px;">
+              <span style="font-size: 11px; color: var(--success); font-family: var(--font-mono); display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Class-Compliant USB-MIDI
+              </span>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; border-color: var(--border-strong);">
+            <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent);">STEP 03</div>
+            <h3 style="color: #ffffff; font-size: 17px;">Run Litwave</h3>
+            <p style="color: var(--muted); font-size: 13px; line-height: 1.5;">
+              Double-click <b style="color: #ffffff;">Litwave.bat</b> (or <b style="color: #ffffff;">Litwave.vbs</b>). It boots the background engine and opens native Edge app mode in &lt; 1s.
+            </p>
+            <div style="margin-top: auto; padding-top: 8px;">
+              <code style="font-size: 11px; color: var(--accent); font-family: var(--font-mono); background: var(--sunken); padding: 4px 8px; border-radius: 4px; display: inline-block;">127.0.0.1:8080 (--app mode)</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verified Hardware & System Requirements -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff; font-size: 15px;">Hardware &amp; Audio Support</h3>
+              <span class="meta" style="color: var(--success); font-family: var(--font-mono); font-size: 11px;">100% VERIFIED</span>
+            </div>
+            <table class="ds-table" style="margin-top: 0;">
+              <tr><td class="accent-cell">Keyboards</td><td>CASIO USB-MIDI, Yamaha MONTAGE/MODX, Roland RD/Fantom, Korg, Arturia, Novation</td></tr>
+              <tr><td class="accent-cell">Audio Devices</td><td>ASIO / WASAPI low-latency drivers, Focusrite, NUX, MOTU, Audient, Behringer, Realtek</td></tr>
+              <tr><td class="accent-cell">Stage Remote</td><td>Any iOS Safari, Android Chrome, or iPad running on the same local Wi-Fi network</td></tr>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="row-between" style="margin-bottom: 12px;">
+              <h3 style="color: #ffffff; font-size: 15px;">Environment Specifications</h3>
+              <span class="meta" style="color: var(--accent); font-family: var(--font-mono); font-size: 11px;">PORTABLE RUNTIME</span>
+            </div>
+            <table class="ds-table" style="margin-top: 0;">
+              <tr><td class="accent-cell">Operating System</td><td>Windows 10 / 11 (64-bit)</td></tr>
+              <tr><td class="accent-cell">Disk Footprint</td><td>~240 MB compressed (~550 MB uncompressed with starter soundbanks)</td></tr>
+              <tr><td class="accent-cell">Prerequisites</td><td>None. Self-contained Python 3.11 embed + Microsoft Edge App mode included.</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 5: WORKSTATION CAPABILITIES & PIPELINE FLOW
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-features" class="category-page" data-od-id="features">
+      <div class="container stack" style="gap: 36px;">
+        <div style="max-width: 52ch;">
+          <h2>Low-Latency Practice Signal Architecture</h2>
+          <p style="color: var(--muted); font-size: 14.5px; margin-top: 6px;">
+            Scroll-interactive hardware pipeline tracing real-time MIDI input, C++ sound generation, UDP telemetry bus, and stage display parity.
+          </p>
+        </div>
+
+        <!-- Interactive Animated Hardware Signal Pipeline Schematic (#2) -->
+        <div class="card" style="padding: 24px; background: var(--sunken); border-color: var(--border-strong); position: relative; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; z-index: 2;">
+            <!-- Node 1: Keyboard Input -->
+            <div id="pipe-node-1" class="studio-panel" style="transition: all 0.3s ease; border-color: var(--accent); background: var(--surface);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent);">NODE 01 &bull; MIDI IN</div>
+              <div style="font-weight: 700; color: #ffffff; font-size: 14px; margin-top: 4px;">Hardware MIDI</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">1:1 Non-transposed passthrough thread (Mido worker).</div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--success); margin-top: 8px;">LATENCY: 0.02 ms</div>
+            </div>
+
+            <!-- Node 2: C++ Audio Engine -->
+            <div id="pipe-node-2" class="studio-panel" style="transition: all 0.3s ease; border-color: var(--border); background: var(--surface);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">NODE 02 &bull; SYNTH CORE</div>
+              <div style="font-weight: 700; color: #ffffff; font-size: 14px; margin-top: 4px;">Headless C++ Engine</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">UDP loopback (port 9123) with TSF fallback buffer.</div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 8px;">BUFFER: 5.80 ms</div>
+            </div>
+
+            <!-- Node 3: Telemetry Stream -->
+            <div id="pipe-node-3" class="studio-panel" style="transition: all 0.3s ease; border-color: var(--border); background: var(--surface);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">NODE 03 &bull; BROADCAST</div>
+              <div style="font-weight: 700; color: #ffffff; font-size: 14px; margin-top: 4px;">Starlette /ws Bus</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">25 FPS non-blocking telemetry serialization.</div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--success); margin-top: 8px;">RATE: 25 FPS REFRESH</div>
+            </div>
+
+            <!-- Node 4: Stage Remote -->
+            <div id="pipe-node-4" class="studio-panel" style="transition: all 0.3s ease; border-color: var(--border); background: var(--surface);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">NODE 04 &bull; STAGE DISPLAY</div>
+              <div style="font-weight: 700; color: #ffffff; font-size: 14px; margin-top: 4px;">PWA Stage Remote</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">72px Nashville chord readout + thumb drone trigger.</div>
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 8px;">SYNC: ZERO DELAY</div>
+            </div>
+          </div>
+
+          <!-- Connecting Signal Bus Bar with Scrolling Energy Pulse -->
+          <div style="margin-top: 14px; height: 3px; background: #11141c; border-radius: 2px; position: relative; overflow: hidden;">
+            <div id="signal-pulse-bar" style="position: absolute; top: 0; bottom: 0; left: 0%; width: 25%; background: linear-gradient(90deg, transparent, var(--accent), #ffffff, var(--accent), transparent); box-shadow: 0 0 12px var(--accent);"></div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="feature card">
+            <div class="feature-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <h3>Automated MIR Chord Extraction</h3>
+            <p>Analyze practice tracks with Librosa to generate synchronized beat intervals, chord progressions, and instant Nashville Number system charts.</p>
+          </div>
+          <div class="feature card">
+            <div class="feature-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            </div>
+            <h3>Harmonic Drone Foundation</h3>
+            <p>Continuous drone pad sub-bus provides a solid tonal anchor for interval training, scale practice, and chord voicing discovery.</p>
+          </div>
+          <div class="feature card">
+            <div class="feature-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+            </div>
+            <h3>Precision A/B Practice Looping</h3>
+            <p>Isolate complex transitions with sample-accurate loop bounds, phase-aligned metronome ticks, and non-destructive tempo shifting.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         CATEGORY 6: DOCUMENTATION & INSTALLATION
+         ══════════════════════════════════════════════════════════════════ -->
+    <section id="cat-docs" class="category-page" data-od-id="documentation">
+      <div class="container">
+        <div style="max-width: 44ch; margin-bottom: 32px;">
+          <h2>Architecture lifecycle &amp; environment installation.</h2>
+        </div>
+
+        <div class="grid-1-2">
+          <div class="doc-nav-list">
+            <button class="doc-nav-btn active" onclick="selectDocTab('tab-arch', this)">
+              <span>System Architecture</span>
+            </button>
+            <button class="doc-nav-btn" onclick="selectDocTab('tab-transport', this)">
+              <span>Transport &amp; Looper</span>
+            </button>
+            <button class="doc-nav-btn" onclick="selectDocTab('tab-install', this)">
+              <span>Workstation Installation</span>
+            </button>
+            <button class="doc-nav-btn" onclick="selectDocTab('tab-api', this)">
+              <span>REST &amp; Telemetry Endpoints</span>
+            </button>
+          </div>
+
+          <div class="doc-pane">
+            <div id="tab-arch" class="doc-content-tab active">
+              <h3 style="color: #ffffff; margin-bottom: 8px;">Asynchronous Lifecycle Decoupling</h3>
+              <p style="color: var(--muted); font-size: 14px; margin-bottom: 16px;">
+                Litwave isolates Starlette routing from physical audio and MIDI hardware.
+                Audio streams and worker threads initialize only during `AppState.boot()`.
+              </p>
+              <table class="ds-table">
+                <thead><tr><th>Subsystem</th><th>Technology</th><th>Purpose</th></tr></thead>
+                <tbody>
+                  <tr><td class="accent-cell">Backend Server</td><td>Starlette / Uvicorn</td><td>Asynchronous REST API &amp; WebSocket bus</td></tr>
+                  <tr><td class="accent-cell">Audio Driver</td><td>Miniaudio / Sounddevice</td><td>Native low-latency practice playback</td></tr>
+                  <tr><td class="accent-cell">MIDI Core</td><td>Mido Worker Thread</td><td>Dedicated background event loop (1:1 passthrough)</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="tab-transport" class="doc-content-tab">
+              <h3 style="color: #ffffff; margin-bottom: 8px;">Transport Engine &amp; Loop Practice</h3>
+              <p style="color: var(--muted); font-size: 14px; margin-bottom: 16px;">
+                Set precise sample bounds for difficult song sections. Metronome clicks lock phase to bar downbeats.
+              </p>
+              <div class="code-term">
+                <span class="cm"># Set A/B loop points and adjust playback speed</span><br>
+                <span class="kw">POST</span> /api/transport<br>
+                { "action": "loop_a", "seconds": 32.4 }<br>
+                { "action": "speed", "speed": 0.75 }  <span class="cm"># 75% speed without pitch drop</span>
+              </div>
+            </div>
+
+            <div id="tab-install" class="doc-content-tab">
+              <h3 style="color: #ffffff; margin-bottom: 8px;">Installation &amp; Environment Setup</h3>
+              <p style="color: var(--muted); font-size: 14px; margin-bottom: 14px;">
+                Standard prerequisites: Python 3.11+ and Node.js 18+.
+              </p>
+              <div class="code-term">
+                <span class="kw">python</span> -m venv .venv<br>
+                <span class="kw">.venv\Scripts\activate</span><br>
+                <span class="kw">pip</span> install starlette uvicorn sounddevice miniaudio mido librosa<br>
+                <span class="kw">start.bat</span>  <span class="cm"># Launches Litwave Studio directly on http://localhost:8080</span>
+              </div>
+            </div>
+
+            <div id="tab-api" class="doc-content-tab">
+              <h3 style="color: #ffffff; margin-bottom: 8px;">REST &amp; Telemetry Endpoints</h3>
+              <p style="color: var(--muted); font-size: 14px; margin-bottom: 14px;">
+                Control the practice workstation programmatically via lightweight JSON payloads:
+              </p>
+              <table class="ds-table">
+                <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+                <tbody>
+                  <tr><td class="accent-cell">GET</td><td>/api/status</td><td>Full telemetry snapshot (audio, MIDI, devices)</td></tr>
+                  <tr><td class="accent-cell">POST</td><td>/api/transport</td><td>Transport play, pause, seek, loop, tempo</td></tr>
+                  <tr><td class="accent-cell">POST</td><td>/api/drone-pad</td><td>Root note selection &amp; crossfade duration</td></tr>
+                  <tr><td class="accent-cell">POST</td><td>/api/midi/panic</td><td>Instant held-note release across all channels</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pagefoot (Ultra-compact with GitHub logo profile link) -->
+  <footer class="pagefoot" data-od-id="pagefoot">
+    <div class="container row-between">
+      <div class="brand-foot">Litwave</div>
+      <div class="row" style="gap: 16px;">
+        <span class="meta">PRACTICE WORKSTATION FOR KEYBOARDISTS &bull; 2026</span>
+        <a href="https://github.com/Jeremyszs" target="_blank" rel="noopener noreferrer" class="github-credit-link" aria-label="GitHub Profile">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>Jeremyszs</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts: Popout Header, Anti-Dot Physics, Auto-Scroll Category Paging, Audio Engine -->
+  <script>
+    // --- 0. More Dropdown Toggle, Click-Outside & Auto-Close Handlers ---
+    function toggleNavDropdown(e) {
+      if (e) e.stopPropagation();
+      const dd = document.getElementById('navDropdown');
+      if (dd) dd.classList.toggle('open');
+    }
+
+    function closeNavDropdown() {
+      const dd = document.getElementById('navDropdown');
+      if (dd) dd.classList.remove('open');
+    }
+
+    // Close when clicking anywhere outside
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('navDropdown');
+      if (dd && !dd.contains(e.target)) {
+        dd.classList.remove('open');
+      }
+    });
+
+    // Close on any scroll
+    window.addEventListener('scroll', () => {
+      closeNavDropdown();
+    }, { passive: true });
+
+    // --- 1. Popout Floating Liquid Glass Header on Scroll (Instant Responsive Return) ---
+    const topnavWrap = document.getElementById('topnav-wrap');
+    let isHeaderScrolled = false;
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      // Triggers popout at 35px, immediately snaps back the instant user reaches top (< 30px)
+      if (!isHeaderScrolled && scrollY > 35) {
+        isHeaderScrolled = true;
+        topnavWrap.classList.add('scrolled');
+      } else if (isHeaderScrolled && scrollY <= 30) {
+        isHeaderScrolled = false;
+        topnavWrap.classList.remove('scrolled');
+      }
+
+      // A. Dynamic Performance Telemetry Animation (Benchmarks Section)
+      // Starts when user has scrolled the gauge card well into view (starts at 30% from bottom, eases smoothly)
+      const specsSec = document.getElementById('cat-specs');
+      if (specsSec) {
+        const rect = specsSec.getBoundingClientRect();
+        const winH = window.innerHeight;
+        // Trigger only once the card enters the central viewport (between 25% from bottom and 9% from top)
+        const triggerStart = winH * 0.75;
+        const triggerEnd = winH * 0.09;
+        if (rect.top <= triggerStart && rect.bottom >= triggerEnd) {
+          const rawProgress = (triggerStart - rect.top) / (triggerStart - triggerEnd);
+          const progress = Math.min(1, Math.max(0, rawProgress));
+          
+          // Smooth progressive animation
+          const importBar = document.getElementById('perf-import-bar');
+          if (importBar) importBar.style.width = (progress * 93.1).toFixed(1) + '%';
+          
+          const memBar = document.getElementById('perf-mem-bar');
+          if (memBar) memBar.style.width = (progress * 28).toFixed(1) + '%';
+
+          const latBar = document.getElementById('perf-lat-bar');
+          if (latBar) latBar.style.width = (progress * 18).toFixed(1) + '%';
+        }
+      }
+
+      // B. Signal Pipeline Flow Animation (#2 Approved)
+      // Progresses smoothly while the user is actively viewing the hardware schematic card
+      const featSec = document.getElementById('cat-features');
+      if (featSec) {
+        const rect = featSec.getBoundingClientRect();
+        const winH = window.innerHeight;
+        const triggerStart = winH * 0.70;
+        const triggerEnd = winH * 0.10;
+        if (rect.top <= triggerStart && rect.bottom >= triggerEnd) {
+          const rawProgress = (triggerStart - rect.top) / (triggerStart - triggerEnd);
+          const progress = Math.min(1, Math.max(0, rawProgress));
+          
+          const pulseBar = document.getElementById('signal-pulse-bar');
+          if (pulseBar) {
+            pulseBar.style.left = (progress * 75).toFixed(1) + '%';
+          }
+
+          // Sequential node illumination paced with scroll progress
+          const n1 = document.getElementById('pipe-node-1');
+          const n2 = document.getElementById('pipe-node-2');
+          const n3 = document.getElementById('pipe-node-3');
+          const n4 = document.getElementById('pipe-node-4');
+
+          if (n1) n1.style.borderColor = progress > 0.18 ? 'var(--accent)' : 'var(--border)';
+          if (n2) n2.style.borderColor = progress > 0.42 ? 'var(--accent)' : 'var(--border)';
+          if (n3) n3.style.borderColor = progress > 0.68 ? 'var(--accent)' : 'var(--border)';
+          if (n4) n4.style.borderColor = progress > 0.88 ? 'var(--accent)' : 'var(--border)';
+        }
+      }
+    }, { passive: true });
+
+    function scrollSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // --- 2. Smooth Navigation Scrolling (Standard Scroll with Smooth Anchor Jumps) ---
+    // Scroll-by-page removed for natural, uninterrupted scrolling
+
+    // --- 3. View Switcher: Desktop Studio vs Mobile Remote ---
+    function switchView(viewName) {
+      const studio = document.getElementById('view-studio');
+      const remote = document.getElementById('view-remote');
+      const btnStudio = document.getElementById('btn-view-studio');
+      const btnRemote = document.getElementById('btn-view-remote');
+
+      if (viewName === 'studio') {
+        studio.style.display = 'block';
+        remote.style.display = 'none';
+        btnStudio.classList.add('active');
+        btnRemote.classList.remove('active');
+      } else {
+        studio.style.display = 'none';
+        remote.style.display = 'block';
+        btnRemote.classList.add('active');
+        btnStudio.classList.remove('active');
+      }
+    }
+
+    function selectDocTab(tabId, btn) {
+      document.querySelectorAll('.doc-content-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.doc-nav-btn').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    // --- 4. Dynamic Continuous Roaming White Dots Canvas with Anti-Dot Cursor Repulsor ---
+    const dotsCanvas = document.getElementById('dots-canvas');
+    const spotlight = document.getElementById('cursor-spotlight');
+
+    if (dotsCanvas) {
+      const dCtx = dotsCanvas.getContext('2d');
+      let dw = dotsCanvas.width = window.innerWidth;
+      let dh = dotsCanvas.height = window.innerHeight;
+
+      window.addEventListener('resize', () => {
+        dw = dotsCanvas.width = window.innerWidth;
+        dh = dotsCanvas.height = window.innerHeight;
+      });
+
+      // Cursor tracking with velocity calculation
+      let mouseX = -1000;
+      let mouseY = -1000;
+      let prevMouseX = -1000;
+      let prevMouseY = -1000;
+      let mouseVx = 0;
+      let mouseVy = 0;
+      const antiDotRadius = 15; // 15px defensive radius
+
+      window.addEventListener('pointermove', (e) => {
+        if (prevMouseX !== -1000) {
+          mouseVx = e.clientX - prevMouseX;
+          mouseVy = e.clientY - prevMouseY;
+        }
+        prevMouseX = mouseX = e.clientX;
+        prevMouseY = mouseY = e.clientY;
+
+        spotlight.style.left = e.clientX + 'px';
+        spotlight.style.top = e.clientY + 'px';
+      });
+
+      // Initialize roaming particles with lifetime lifecycle (born, roam, disappear, respawn)
+      const dotCount = Math.min(Math.floor(window.innerWidth / 14), 100);
+      const dots = [];
+
+      function createDot(initial = false) {
+        return {
+          x: Math.random() * dw,
+          y: initial ? Math.random() * dh : (Math.random() > 0.5 ? 0 : dh),
+          vx: (Math.random() - 0.5) * 0.9, // Slower gentle speed
+          vy: (Math.random() - 0.5) * 0.9,
+          radius: Math.random() * 1.4 + 0.8,
+          alpha: 0,
+          maxAlpha: Math.random() * 0.35 + 0.15, // Reduced subtle opacity (0.15 - 0.50)
+          life: 0,
+          maxLife: Math.random() * 320 + 200,
+          state: 'fade-in'
+        };
+      }
+
+      for (let i = 0; i < dotCount; i++) {
+        const d = createDot(true);
+        d.life = Math.random() * d.maxLife;
+        d.alpha = d.maxAlpha;
+        d.state = 'roam';
+        dots.push(d);
+      }
+
+      function renderDots() {
+        dCtx.clearRect(0, 0, dw, dh);
+
+        // Decay mouse velocity
+        mouseVx *= 0.85;
+        mouseVy *= 0.85;
+
+        for (let i = 0; i < dotCount; i++) {
+          let d = dots[i];
+          d.life++;
+
+          // Lifecycle & Disappearing logic
+          if (d.state === 'fade-in') {
+            d.alpha += 0.02;
+            if (d.alpha >= d.maxAlpha) {
+              d.alpha = d.maxAlpha;
+              d.state = 'roam';
+            }
+          } else if (d.state === 'roam') {
+            if (d.life > d.maxLife - 60) {
+              d.state = 'fade-out';
+            }
+          } else if (d.state === 'fade-out') {
+            d.alpha -= 0.02;
+            if (d.alpha <= 0) {
+              // Disappear completely and respawn elsewhere
+              dots[i] = createDot(false);
+              continue;
+            }
+          }
+
+          // Constant movement with slight random wandering
+          d.vx += (Math.random() - 0.5) * 0.08;
+          d.vy += (Math.random() - 0.5) * 0.08;
+
+          // Clamp max velocity
+          const speed = Math.sqrt(d.vx * d.vx + d.vy * d.vy);
+          if (speed > 2.8) {
+            d.vx = (d.vx / speed) * 2.8;
+            d.vy = (d.vy / speed) * 2.8;
+          }
+
+          d.x += d.vx;
+          d.y += d.vy;
+
+          // Boundary bounce or wrap
+          if (d.x < 0) { d.x = 0; d.vx = Math.abs(d.vx); }
+          if (d.x > dw) { d.x = dw; d.vx = -Math.abs(d.vx); }
+          if (d.y < 0) { d.y = 0; d.vy = Math.abs(d.vy); }
+          if (d.y > dh) { d.y = dh; d.vy = -Math.abs(d.vy); }
+
+          // --- Anti-Dot Zone (7.5px) Physics: Repel & Fling ---
+          const dx = d.x - mouseX;
+          const dy = d.y - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < antiDotRadius && dist > 0) {
+            const force = (antiDotRadius - dist) / antiDotRadius;
+            const pushX = (dx / dist) * (force * 6 + 2);
+            const pushY = (dy / dist) * (force * 6 + 2);
+
+            // Fling away in cursor direction + radial outward push
+            d.vx = pushX + (mouseVx * 0.4);
+            d.vy = pushY + (mouseVy * 0.4);
+
+            d.x = mouseX + (dx / dist) * (antiDotRadius + 1);
+            d.y = mouseY + (dy / dist) * (antiDotRadius + 1);
+          }
+
+          // Draw white particle
+          dCtx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, d.alpha)})`;
+          dCtx.beginPath();
+          dCtx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+          dCtx.fill();
+        }
+
+        requestAnimationFrame(renderDots);
+      }
+      renderDots();
+    }
+
+    // --- 5. Web Audio WAV Sample Player & Synthesizer ---
+    let audioCtx = null;
+    let droneOsc1 = null;
+    let droneOsc2 = null;
+    let droneSub = null;
+    let droneGain = null;
+    let currentDroneNote = null;
+    let analyserNode = null;
+    const sampleBufferCache = {};
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserNode.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    async function playSampleFile(name, btn) {
+      const ctx = getAudioContext();
+      if (btn) {
+        btn.classList.add('hit');
+        setTimeout(() => btn.classList.remove('hit'), 150);
+      }
+
+      try {
+        let buffer = sampleBufferCache[name];
+        if (!buffer) {
+          const res = await fetch(`samples/${name}.wav`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const arrayBuffer = await res.arrayBuffer();
+          buffer = await ctx.decodeAudioData(arrayBuffer);
+          sampleBufferCache[name] = buffer;
+        }
+
+        const src = ctx.createBufferSource();
+        src.buffer = buffer;
+        src.connect(analyserNode);
+        src.start(0);
+      } catch (err) {
+        // High-fidelity DSP synthesis fallback for all 8 distinct sound types
+        synthesizePadSound(name, ctx);
+      }
+    }
+
+    // 1. MPC Sampler & Drum Machine Voice Synthesizer
+    function synthesizePadSound(type, ctx) {
+      const now = ctx.currentTime;
+
+      if (type === 'kick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(38, now + 0.14);
+        gain.gain.setValueAtTime(1.0, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(analyserNode);
+        osc.start(now);
+        osc.stop(now + 0.48);
+
+        const click = ctx.createOscillator();
+        const cGain = ctx.createGain();
+        click.type = 'triangle';
+        click.frequency.setValueAtTime(800, now);
+        click.frequency.exponentialRampToValueAtTime(60, now + 0.02);
+        cGain.gain.setValueAtTime(0.4, now);
+        cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        click.connect(cGain);
+        cGain.connect(analyserNode);
+        click.start(now);
+        click.stop(now + 0.03);
+
+      } else if (type === 'snare') {
+        const bodyOsc = ctx.createOscillator();
+        const bodyGain = ctx.createGain();
+        bodyOsc.type = 'triangle';
+        bodyOsc.frequency.setValueAtTime(220, now);
+        bodyOsc.frequency.exponentialRampToValueAtTime(110, now + 0.08);
+        bodyGain.gain.setValueAtTime(0.6, now);
+        bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        bodyOsc.connect(bodyGain);
+        bodyGain.connect(analyserNode);
+        bodyOsc.start(now);
+        bodyOsc.stop(now + 0.16);
+
+        const bufferSize = ctx.sampleRate * 0.22;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(1200, now);
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.7, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        whiteNoise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(analyserNode);
+        whiteNoise.start(now);
+
+      } else if (type === 'shaker') {
+        const bSize = ctx.sampleRate * 0.15;
+        const nBuffer = ctx.createBuffer(1, bSize, ctx.sampleRate);
+        const out = nBuffer.getChannelData(0);
+        for (let i = 0; i < bSize; i++) out[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = nBuffer;
+        const bandpass = ctx.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        bandpass.frequency.setValueAtTime(6500, now);
+        bandpass.Q.setValueAtTime(3.5, now);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.5, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        noise.connect(bandpass);
+        bandpass.connect(gain);
+        gain.connect(analyserNode);
+        noise.start(now);
+
+      } else if (type === 'swell') {
+        const dur = 1.6;
+        const bSize = ctx.sampleRate * dur;
+        const nBuffer = ctx.createBuffer(1, bSize, ctx.sampleRate);
+        const out = nBuffer.getChannelData(0);
+        for (let i = 0; i < bSize; i++) out[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = nBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(2500, now);
+        filter.frequency.exponentialRampToValueAtTime(8000, now + dur);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.75, now + dur - 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur + 0.2);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(analyserNode);
+        noise.start(now);
+
+      } else if (type === 'clap') {
+        const times = [0, 0.012, 0.024, 0.038];
+        times.forEach((t, idx) => {
+          const bSize = ctx.sampleRate * (idx === times.length - 1 ? 0.28 : 0.04);
+          const nBuffer = ctx.createBuffer(1, bSize, ctx.sampleRate);
+          const out = nBuffer.getChannelData(0);
+          for (let i = 0; i < bSize; i++) out[i] = Math.random() * 2 - 1;
+          const noise = ctx.createBufferSource();
+          noise.buffer = nBuffer;
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1400, now + t);
+          filter.Q.setValueAtTime(1.8, now + t);
+          const gain = ctx.createGain();
+          const amp = idx === times.length - 1 ? 0.7 : 0.4;
+          gain.gain.setValueAtTime(amp, now + t);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + t + (idx === times.length - 1 ? 0.24 : 0.035));
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(analyserNode);
+          noise.start(now + t);
+        });
+
+      } else if (type === 'chime') {
+        const freqs = [1046.5, 1318.5, 1567.98, 2093.0, 2637.0, 3135.96];
+        freqs.forEach((f, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, now + i * 0.03);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.setValueAtTime(0.25 / (i + 1), now + i * 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.03 + 1.6);
+          osc.connect(gain);
+          gain.connect(analyserNode);
+          osc.start(now + i * 0.03);
+          osc.stop(now + i * 0.03 + 1.65);
+        });
+
+      } else if (type === 'tape_drop') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(3200, now);
+        filter.frequency.exponentialRampToValueAtTime(120, now + 0.45);
+        gain.gain.setValueAtTime(0.65, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(analyserNode);
+        osc.start(now);
+        osc.stop(now + 0.5);
+
+      } else if (type === 'sub_drop') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(95, now);
+        osc.frequency.exponentialRampToValueAtTime(24, now + 1.2);
+        gain.gain.setValueAtTime(1.0, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+        osc.connect(gain);
+        gain.connect(analyserNode);
+        osc.start(now);
+        osc.stop(now + 1.45);
+      }
+    }
+
+    // Humanized Voicing Simulator (Ear Training Engine)
+    function playVoicingChord(chordName, rootMidi, intervals, btn) {
+      const ctx = getAudioContext();
+      if (btn) {
+        document.querySelectorAll('#cat-ear-training .drone-key').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      const now = ctx.currentTime;
+      const bassMidi = (rootMidi % 12) + 36; // C2 to B2
+      const bassFreq = 440 * Math.pow(2, (bassMidi - 69) / 12);
+
+      // 1. Play deep bass root note
+      const bassOsc = ctx.createOscillator();
+      const bassGain = ctx.createGain();
+      bassOsc.type = 'triangle';
+      bassOsc.frequency.setValueAtTime(bassFreq, now);
+      bassGain.gain.setValueAtTime(0.5, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+      bassOsc.connect(bassGain);
+      bassGain.connect(analyserNode);
+      bassOsc.start(now);
+      bassOsc.stop(now + 1.85);
+
+      // 2. Play right-hand open harmony with humanized micro-strum roll (12-22ms)
+      intervals.forEach((semi, idx) => {
+        let noteMidi = rootMidi + semi;
+        while (noteMidi < 60) noteMidi += 12; // Spread above middle C
+        const noteFreq = 440 * Math.pow(2, (noteMidi - 69) / 12);
+
+        const strumDelay = (idx + 1) * (0.014 + Math.random() * 0.008);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(noteFreq, now + strumDelay);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.setValueAtTime(0.35, now + strumDelay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + strumDelay + 1.5);
+        osc.connect(gain);
+        gain.connect(analyserNode);
+        osc.start(now + strumDelay);
+        osc.stop(now + strumDelay + 1.55);
+      });
+
+      // Update interactive HUD info
+      const nameEl = document.getElementById('voicing-name');
+      const notesEl = document.getElementById('voicing-notes');
+      if (nameEl) nameEl.innerText = chordName;
+      if (notesEl) {
+        if (chordName === 'Cmaj9') notesEl.innerText = 'C2 + E4 G4 B4 D5';
+        else if (chordName === 'Cm11') notesEl.innerText = 'C2 + Eb4 G4 Bb4 D5 F5';
+        else if (chordName.startsWith('C7alt')) notesEl.innerText = 'C2 + E4 Bb4 Db5 Eb5 Ab5';
+        else notesEl.innerText = 'C2 + F4 G4 Bb4 D5';
+      }
+    }
+
+    // --- Setlist Scene Presets with Morphing & Pipeline Pulse ---
+    const sceneConfigs = {
+      'Scene 1': { name: 'MAIN PIANO', faders: [82, 68, 74, 50], labels: ['CFX Piano', 'Warm Pad', 'DX Rhodes', 'Metronome'] },
+      'Scene 2': { name: 'RHODES DRIVE', faders: [30, 45, 92, 40], labels: ['CFX Soft', 'Vintage Pad', 'DX Rhodes MkI', 'Metronome'] },
+      'Scene 3': { name: 'ORCH LAYER', faders: [70, 88, 20, 40], labels: ['Grand Piano', 'Seattle Strings', 'Chamber Celli', 'Click'] },
+      'Scene 4': { name: 'SYNTH CLIMAX', faders: [85, 90, 80, 60], labels: ['Punch Piano', 'Moog Sub Lead', 'SuperSaw Pad', 'High Click'] }
+    };
+
+    function selectScenePreset(sceneKey, btn) {
+      if (btn) {
+        document.querySelectorAll('#cat-dsp-setlist .drone-key').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      // 1. Trigger hardware pipeline pulse in Section 5
+      const pulseBar = document.getElementById('signal-pulse-bar');
+      if (pulseBar) {
+        pulseBar.style.transition = 'left 0.4s ease';
+        pulseBar.style.left = '75%';
+        setTimeout(() => {
+          pulseBar.style.left = '0%';
+          setTimeout(() => { pulseBar.style.transition = ''; }, 450);
+        }, 450);
+      }
+
+      // 2. Morph fader strip heights in Desktop Studio View
+      const keyPrefix = sceneKey.split(':')[0].trim();
+      const cfg = sceneConfigs[keyPrefix] || sceneConfigs['Scene 1'];
+      const faderBars = document.querySelectorAll('.fader-val');
+      if (faderBars.length >= 4) {
+        cfg.faders.forEach((val, i) => {
+          if (faderBars[i]) faderBars[i].style.height = val + '%';
+        });
+      }
+    }
+
+    // --- Interactive 96-Band Spectrum Analyzer Canvas reacting to Audio & Warmth ---
+    let warmthDriveMultiplier = 1.8;
+    function updateWarmthDrive(val) {
+      warmthDriveMultiplier = parseFloat(val);
+      const txt = document.getElementById('warmth-val');
+      if (txt) txt.innerText = val + 'x TUBE';
+    }
+
+    const dspCanvas = document.getElementById('dsp-spectrum-canvas');
+    if (dspCanvas) {
+      const dCtx = dspCanvas.getContext('2d');
+      let dw = dspCanvas.width = dspCanvas.offsetWidth;
+      let dh = dspCanvas.height = dspCanvas.offsetHeight;
+
+      window.addEventListener('resize', () => {
+        dw = dspCanvas.width = dspCanvas.offsetWidth;
+        dh = dspCanvas.height = dspCanvas.offsetHeight;
+      });
+
+      function renderDspSpectrum() {
+        requestAnimationFrame(renderDspSpectrum);
+        dCtx.fillStyle = '#020306';
+        dCtx.fillRect(0, 0, dw, dh);
+
+        const bands = 48; // 48 rendered twin stereo bars (representing 96 bands)
+        const barWidth = (dw / bands) - 1.5;
+
+        let freqData = null;
+        if (analyserNode) {
+          freqData = new Uint8Array(analyserNode.frequencyBinCount);
+          analyserNode.getByteFrequencyData(freqData);
+        }
+
+        const now = Date.now() * 0.003;
+        for (let i = 0; i < bands; i++) {
+          let energy = 0;
+          if (freqData && freqData.length > 0) {
+            const idx = Math.floor((i / bands) * (freqData.length * 0.65));
+            energy = (freqData[idx] / 255.0) * dh * 0.85;
+          }
+
+          // Ambient simulated baseline FFT activity modulated by Warmth Drive
+          const simNoise = (Math.sin(now + i * 0.38) * 0.5 + 0.5) * (dh * 0.22) * (warmthDriveMultiplier * 0.65);
+          const totalHeight = Math.min(dh - 2, Math.max(3, energy + simNoise));
+
+          const x = i * (barWidth + 1.5);
+          const y = dh - totalHeight;
+
+          // Color gradient from studio cyan to warm saturated orange/amber
+          const isHighHarmonic = i > (bands * 0.6);
+          if (isHighHarmonic && warmthDriveMultiplier > 2.0) {
+            dCtx.fillStyle = '#f59e0b'; // Tube warmth harmonic distortion
+          } else {
+            dCtx.fillStyle = '#38bdf8'; // Clean cyan
+          }
+
+          dCtx.fillRect(x, y, barWidth, totalHeight);
+        }
+      }
+      renderDspSpectrum();
+    }
+
+    function stopDrone() {
+      if (droneGain && audioCtx) {
+        const now = audioCtx.currentTime;
+        try {
+          droneGain.gain.cancelScheduledValues(now);
+          droneGain.gain.setValueAtTime(droneGain.gain.value, now);
+          droneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+        } catch(e){}
+        setTimeout(() => {
+          try {
+            if (droneOsc1) { droneOsc1.stop(); droneOsc1.disconnect(); droneOsc1 = null; }
+            if (droneOsc2) { droneOsc2.stop(); droneOsc2.disconnect(); droneOsc2 = null; }
+            if (droneSub) { droneSub.stop(); droneSub.disconnect(); droneSub = null; }
+          } catch(e){}
+        }, 260);
+      }
+      currentDroneNote = null;
+      document.querySelectorAll('#cat-lab .drone-key').forEach(k => k.classList.remove('active'));
+    }
+
+    function playDrone(note, freq, btn) {
+      const ctx = getAudioContext();
+
+      // Toggle behavior: clicking the active note turns the synthesizer off
+      if (currentDroneNote === note) {
+        stopDrone();
+        return;
+      }
+
+      // Stop any running voices first
+      stopDrone();
+
+      currentDroneNote = note;
+      if (btn) btn.classList.add('active');
+
+      const now = ctx.currentTime;
+
+      // Warm analog multi-oscillator worship drone (Root triangle + 5th overtone sine + sub octave warmth)
+      droneOsc1 = ctx.createOscillator();
+      droneOsc2 = ctx.createOscillator();
+      droneSub = ctx.createOscillator();
+      droneGain = ctx.createGain();
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(520, now);
+      filter.Q.setValueAtTime(2.0, now);
+
+      // Root voice
+      droneOsc1.type = 'triangle';
+      droneOsc1.frequency.setValueAtTime(freq, now);
+
+      // Warm 5th harmonic (perfect fifth: 3/2 ratio)
+      droneOsc2.type = 'sine';
+      droneOsc2.frequency.setValueAtTime(freq * 1.5, now);
+
+      // Deep sub-octave support
+      droneSub.type = 'sine';
+      droneSub.frequency.setValueAtTime(freq * 0.5, now);
+
+      droneGain.gain.setValueAtTime(0.0001, now);
+      droneGain.gain.exponentialRampToValueAtTime(0.38, now + 0.35);
+
+      droneOsc1.connect(filter);
+      droneOsc2.connect(filter);
+      droneSub.connect(filter);
+      filter.connect(droneGain);
+      droneGain.connect(analyserNode);
+
+      droneOsc1.start(now);
+      droneOsc2.start(now);
+      droneSub.start(now);
+    }
+
+    // Oscilloscope Waveform Animation
+    const scopeCanvas = document.getElementById('scope-canvas');
+    if (scopeCanvas) {
+      const sCtx = scopeCanvas.getContext('2d');
+      
+      function resizeScope() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = scopeCanvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          scopeCanvas.width = rect.width * dpr;
+          scopeCanvas.height = rect.height * dpr;
+          sCtx.scale(dpr, dpr);
+        }
+      }
+      resizeScope();
+      window.addEventListener('resize', resizeScope);
+
+      let idlePhase = 0;
+
+      function drawScope() {
+        requestAnimationFrame(drawScope);
+        const rect = scopeCanvas.getBoundingClientRect();
+        const w = rect.width || 300;
+        const h = rect.height || 72;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Reset transform and clear
+        sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        sCtx.fillStyle = '#020304';
+        sCtx.fillRect(0, 0, w, h);
+
+        // Center zero-crossing baseline
+        sCtx.strokeStyle = '#121620';
+        sCtx.lineWidth = 1;
+        sCtx.beginPath();
+        sCtx.moveTo(0, h / 2);
+        sCtx.lineTo(w, h / 2);
+        sCtx.stroke();
+
+        let hasSignal = false;
+        let data = null;
+
+        if (analyserNode && audioCtx && audioCtx.state === 'running') {
+          const len = analyserNode.frequencyBinCount;
+          data = new Uint8Array(len);
+          analyserNode.getByteTimeDomainData(data);
+          
+          // Check if audio has energy beyond silence (128 is center)
+          for (let i = 0; i < len; i += 4) {
+            if (Math.abs(data[i] - 128) > 2) {
+              hasSignal = true;
+              break;
+            }
+          }
+        }
+
+        sCtx.lineWidth = 2.0;
+        sCtx.strokeStyle = hasSignal ? '#38bdf8' : '#1e293b';
+        sCtx.shadowColor = hasSignal ? 'rgba(56, 189, 248, 0.6)' : 'transparent';
+        sCtx.shadowBlur = hasSignal ? 10 : 0;
+        sCtx.beginPath();
+
+        if (hasSignal && data) {
+          const len = data.length;
+          const slice = w / len;
+          let x = 0;
+          for (let i = 0; i < len; i++) {
+            const v = (data[i] - 128) / 128.0; // Normalized -1.0 to 1.0
+            const y = (h / 2) - (v * (h / 2) * 0.92); // Scale neatly within canvas
+            if (i === 0) sCtx.moveTo(x, y);
+            else sCtx.lineTo(x, y);
+            x += slice;
+          }
+        } else {
+          // Gentle ambient analog idle wave so it's never a broken flat line
+          idlePhase += 0.035;
+          const points = 80;
+          const slice = w / points;
+          for (let i = 0; i <= points; i++) {
+            const x = i * slice;
+            const y = (h / 2) + Math.sin(i * 0.12 + idlePhase) * 2.5 + Math.sin(i * 0.05 - idlePhase * 0.5) * 1.5;
+            if (i === 0) sCtx.moveTo(x, y);
+            else sCtx.lineTo(x, y);
+          }
+        }
+        sCtx.stroke();
+        sCtx.shadowBlur = 0;
+      }
+      drawScope();
+    }
+  </script>
+</body>
+</html>
+<!-- ponytail: Open Design complete anti-dot and auto-scroll practice workstation artifact -->

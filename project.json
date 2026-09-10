@@ -1,0 +1,10 @@
+{
+  "id": "litwave-landing",
+  "name": "Litwave Landing Page",
+  "metadata": {
+    "kind": "landing",
+    "source": "montage-practice-daw"
+  },
+  "createdAt": 1789047000000,
+  "updatedAt": 1789047000000
+}
