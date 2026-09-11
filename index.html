@@ -160,10 +160,14 @@
       .topnav {
         width: 100%;
         background: transparent !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
         border: 1px solid transparent !important;
         box-shadow: none !important;
+        /* Hardware acceleration to prevent GPU jank on mobile */
+        will-change: background, border-color, box-shadow, transform;
+        transform: translateZ(0);
+        transition: background 0.28s ease,
+                    border-color 0.28s ease,
+                    box-shadow 0.28s ease !important;
       }
       .topnav-wrap.scrolled {
         padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
@@ -172,13 +176,13 @@
       .topnav-wrap.scrolled .topnav {
         width: 100%;
         border-radius: 9999px !important;
-        /* Authentic translucent liquid glass for mobile */
-        background: rgba(8, 10, 15, 0.42) !important;
-        backdrop-filter: blur(24px) saturate(200%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+        /* Optimized mobile glass: lighter blur (12px) to eliminate mobile GPU shader stalls */
+        background: rgba(10, 13, 18, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65),
-                    inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.6),
+                    inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
       }
       .topnav-inner {
         padding: 8px 14px;
