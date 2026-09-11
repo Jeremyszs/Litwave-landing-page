@@ -2359,18 +2359,31 @@
     function stopDrone() {
       if (droneGain && audioCtx) {
         const now = audioCtx.currentTime;
+        const g = droneGain;
+        const o1 = droneOsc1;
+        const o2 = droneOsc2;
+        const os = droneSub;
+
+        // Clear global references immediately so subsequent clicks never touch stale nodes
+        droneGain = null;
+        droneOsc1 = null;
+        droneOsc2 = null;
+        droneSub = null;
+
         try {
-          droneGain.gain.cancelScheduledValues(now);
-          droneGain.gain.setValueAtTime(droneGain.gain.value, now);
-          droneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+          g.gain.cancelScheduledValues(now);
+          g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
         } catch(e){}
+
         setTimeout(() => {
           try {
-            if (droneOsc1) { droneOsc1.stop(); droneOsc1.disconnect(); droneOsc1 = null; }
-            if (droneOsc2) { droneOsc2.stop(); droneOsc2.disconnect(); droneOsc2 = null; }
-            if (droneSub) { droneSub.stop(); droneSub.disconnect(); droneSub = null; }
+            if (o1) { o1.stop(); o1.disconnect(); }
+            if (o2) { o2.stop(); o2.disconnect(); }
+            if (os) { os.stop(); os.disconnect(); }
+            if (g) { g.disconnect(); }
           } catch(e){}
-        }, 260);
+        }, 180);
       }
       currentDroneNote = null;
       document.querySelectorAll('#cat-lab .drone-key').forEach(k => k.classList.remove('active'));
@@ -2385,7 +2398,7 @@
         return;
       }
 
-      // Stop any running voices first
+      // Stop any existing running voices first
       stopDrone();
 
       currentDroneNote = note;
@@ -2417,7 +2430,7 @@
       droneSub.frequency.setValueAtTime(freq * 0.5, now);
 
       droneGain.gain.setValueAtTime(0.0001, now);
-      droneGain.gain.exponentialRampToValueAtTime(0.38, now + 0.35);
+      droneGain.gain.exponentialRampToValueAtTime(0.38, now + 0.25);
 
       droneOsc1.connect(filter);
       droneOsc2.connect(filter);
