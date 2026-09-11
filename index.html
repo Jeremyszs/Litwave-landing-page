@@ -146,10 +146,15 @@
 
     /* Responsive Mobile Overrides (Mobile Mode) */
     @media (max-width: 768px) {
-      /* 1. Header is clean & transparent at top, only pops out into liquid glass on scroll */
+      /* 0. Remove cursor spotlight area effect on mobile */
+      #cursor-spotlight {
+        display: none !important;
+      }
+
+      /* 1. Header: always anchored with generous margin from top bar (never touches edge when Chrome sinks) */
       .topnav-wrap {
-        padding-top: max(8px, env(safe-area-inset-top));
-        padding-inline: 12px;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+        padding-inline: 14px !important;
       }
       .topnav {
         width: 100%;
@@ -160,24 +165,26 @@
         box-shadow: none !important;
       }
       .topnav-wrap.scrolled {
-        padding-top: max(8px, env(safe-area-inset-top));
-        padding-inline: 10px;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+        padding-inline: 14px !important;
       }
       .topnav-wrap.scrolled .topnav {
         width: 100%;
-        border-radius: 20px;
-        background: rgba(10, 13, 18, 0.90) !important;
-        backdrop-filter: blur(20px) saturate(190%) !important;
-        -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+        border-radius: 9999px !important;
+        /* Authentic translucent liquid glass for mobile */
+        background: rgba(8, 10, 15, 0.42) !important;
+        backdrop-filter: blur(24px) saturate(200%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75) !important;
+        box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65),
+                    inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
       }
       .topnav-inner {
-        padding: 6px 10px;
+        padding: 8px 14px;
         gap: 8px;
       }
       .topnav-wrap.scrolled .topnav-inner {
-        padding: 7px 12px;
+        padding: 8px 14px;
         gap: 8px;
       }
       .topnav .brand-name {
@@ -202,6 +209,19 @@
       .nav-drop-menu {
         right: 0;
         min-width: 165px;
+      }
+
+      /* Rehearsal Setlist Scene buttons on mobile: full width, clean vertical auto-height */
+      div[style*="grid-template-columns: repeat(2, 1fr)"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      .card .drone-key[onclick*="selectScenePreset"] {
+        height: auto !important;
+        min-height: 48px !important;
+        padding: 10px 14px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
       }
 
       /* 2. Mobile Mode: Hide heavy, bulky Desktop UI visual mockups */
@@ -2154,6 +2174,12 @@
     // --- 4. Dynamic Continuous Roaming White Dots Canvas with Anti-Dot Cursor Repulsor ---
     const dotsCanvas = document.getElementById('dots-canvas');
     const spotlight = document.getElementById('cursor-spotlight');
+
+    // Only enable spotlight follow on pointer-capable desktop devices
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (spotlight && isTouchDevice) {
+      spotlight.style.display = 'none';
+    }
 
     if (dotsCanvas) {
       const dCtx = dotsCanvas.getContext('2d');
