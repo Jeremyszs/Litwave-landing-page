@@ -817,6 +817,14 @@
     }
     #scope-canvas { width: 100%; height: 100%; display: block; }
 
+    /* Gradient numbers for stats */
+    .stat-gradient {
+      background: linear-gradient(135deg, #38bdf8 0%, #ffffff 85%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
     /* Category 4: Specs & Benchmarks */
     .stat .stat-num {
       font-family: var(--font-display);
@@ -1413,69 +1421,48 @@
           </p>
         </div>
 
-        <!-- Real-Time Empirical Performance Metrics -->
-        <div class="card" style="margin-bottom: 24px; padding: 24px; background: var(--sunken); border-color: var(--border-strong);">
-          <div class="row-between" style="margin-bottom: 20px; flex-wrap: wrap; gap: 8px;">
-            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
-              HARDWARE DRIVER: <b style="color: #ffffff;">WASAPI / ASIO EXCLUSIVE</b>
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
-              BUFFER STABILITY: <b style="color: var(--success);">100% (ZERO OVERRUNS)</b>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        <!-- Real-Time Empirical Performance Metrics (Clean Typography) -->
+        <div style="margin-bottom: 40px; margin-top: 10px;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;">
             <!-- Stat 1: Import Speed -->
-            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">COLD IMPORT TIME</div>
-                <div style="font-family: var(--font-display); font-size: clamp(38px, 4.5vw, 48px); font-weight: 800; color: var(--accent); line-height: 1.1; margin-top: 6px;">
-                  93.1<span style="font-size: 0.45em; margin-left: 3px; font-weight: 600; color: #ffffff;">ms</span>
-                </div>
+            <div style="display: flex; flex-direction: column;">
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">COLD IMPORT TIME</div>
+              <div style="font-family: var(--font-display); font-size: clamp(44px, 5.5vw, 64px); font-weight: 800; line-height: 1.05; margin-top: 6px;">
+                <span class="stat-gradient">93.1<span style="font-size: 0.45em; margin-left: 4px; font-weight: 700;">ms</span></span>
               </div>
-              <div style="margin-top: 14px;">
-                <div style="height: 4px; background: #000000; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
-                  <div id="perf-import-bar" style="height: 100%; width: 93%; background: linear-gradient(90deg, var(--accent), #60a5fa); transition: width 0.3s ease;"></div>
-                </div>
-                <div style="font-size: 12.5px; color: var(--muted); line-height: 1.4;">
-                  Immediate runtime readiness. Sub-100ms cold import with lazy-loaded MIR analyzers.
-                </div>
+              <div style="height: 2px; background: #11141c; border-radius: 1px; overflow: hidden; margin-block: 12px 10px;">
+                <div id="perf-import-bar" style="height: 100%; width: 93%; background: linear-gradient(90deg, var(--accent), #ffffff); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
+                Immediate runtime readiness. Sub-100ms cold startup with lazy-loaded MIR harmonic analyzers.
               </div>
             </div>
 
             <!-- Stat 2: Active RSS Memory -->
-            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">ACTIVE RESIDENT MEMORY</div>
-                <div style="font-family: var(--font-display); font-size: clamp(38px, 4.5vw, 48px); font-weight: 800; color: var(--accent); line-height: 1.1; margin-top: 6px;">
-                  139.4<span style="font-size: 0.45em; margin-left: 3px; font-weight: 600; color: #ffffff;">MB</span>
-                </div>
+            <div style="display: flex; flex-direction: column;">
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">ACTIVE RESIDENT MEMORY</div>
+              <div style="font-family: var(--font-display); font-size: clamp(44px, 5.5vw, 64px); font-weight: 800; line-height: 1.05; margin-top: 6px;">
+                <span class="stat-gradient">139.4<span style="font-size: 0.45em; margin-left: 4px; font-weight: 700;">MB</span></span>
               </div>
-              <div style="margin-top: 14px;">
-                <div style="height: 4px; background: #000000; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
-                  <div id="perf-mem-bar" style="height: 100%; width: 28%; background: linear-gradient(90deg, var(--accent), #22c55e); transition: width 0.3s ease;"></div>
-                </div>
-                <div style="font-size: 12.5px; color: var(--muted); line-height: 1.4;">
-                  Ultralight memory footprint. Requires &lt; 3.5% of standard 4 GB laptop RAM during full rehearsal.
-                </div>
+              <div style="height: 2px; background: #11141c; border-radius: 1px; overflow: hidden; margin-block: 12px 10px;">
+                <div id="perf-mem-bar" style="height: 100%; width: 28%; background: linear-gradient(90deg, var(--accent), #ffffff); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
+                Ultralight memory footprint. Requires &lt; 3.5% of standard 4 GB laptop RAM during full rehearsal.
               </div>
             </div>
 
             <!-- Stat 3: Hardware Audio Latency -->
-            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">ROUNDTRIP AUDIO LATENCY</div>
-                <div style="font-family: var(--font-display); font-size: clamp(38px, 4.5vw, 48px); font-weight: 800; color: var(--accent); line-height: 1.1; margin-top: 6px;">
-                  5.80<span style="font-size: 0.45em; margin-left: 3px; font-weight: 600; color: #ffffff;">ms</span>
-                </div>
+            <div style="display: flex; flex-direction: column;">
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em;">ROUNDTRIP AUDIO LATENCY</div>
+              <div style="font-family: var(--font-display); font-size: clamp(44px, 5.5vw, 64px); font-weight: 800; line-height: 1.05; margin-top: 6px;">
+                <span class="stat-gradient">5.80<span style="font-size: 0.45em; margin-left: 4px; font-weight: 700;">ms</span></span>
               </div>
-              <div style="margin-top: 14px;">
-                <div style="height: 4px; background: #000000; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
-                  <div id="perf-lat-bar" style="height: 100%; width: 18%; background: linear-gradient(90deg, var(--success), var(--accent)); transition: width 0.3s ease;"></div>
-                </div>
-                <div style="font-size: 12.5px; color: var(--muted); line-height: 1.4;">
-                  Imperceptible tactile delay. Measured at 256 frames buffer @ 44.1 kHz on class-compliant USB soundcards.
-                </div>
+              <div style="height: 2px; background: #11141c; border-radius: 1px; overflow: hidden; margin-block: 12px 10px;">
+                <div id="perf-lat-bar" style="height: 100%; width: 18%; background: linear-gradient(90deg, var(--accent), #ffffff); transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
+                Imperceptible tactile delay. Measured at 256 frames buffer @ 44.1 kHz on class-compliant USB soundcards.
               </div>
             </div>
           </div>
