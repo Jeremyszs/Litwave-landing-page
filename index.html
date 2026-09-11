@@ -939,9 +939,9 @@
               <a href="#cat-docs" onclick="closeNavDropdown()">Docs &amp; API</a>
             </div>
           </div>
-          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Portable-Windows-x64.zip" class="nav-dl-pill" title="Download Litwave v0.1.0 for Windows (Portable .zip)">
+          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Setup-v0.1.0-x64.exe" class="nav-dl-pill" title="Download Litwave Installer (.exe)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>v0.1.0</span>
+            <span>v0.1.0 (.exe)</span>
           </a>
         </nav>
       </div>
@@ -962,13 +962,15 @@
           sample-accurate loop scrubbing, an ambient drone foundation for ear training, and zero-distraction telemetry.
         </p>
         <div class="hero-cta">
-          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Portable-Windows-x64.zip" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Setup-v0.1.0-x64.exe" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>Download Litwave v0.1.0</span>
-            <span style="font-size: 11px; opacity: 0.75; font-family: var(--font-mono); font-weight: 500;">(241 MB .zip)</span>
+            <span>Download Installer (.exe)</span>
+            <span style="font-size: 11px; opacity: 0.75; font-family: var(--font-mono); font-weight: 500;">(175 MB)</span>
           </a>
-          <button class="btn btn-secondary" onclick="scrollSection('cat-visuals')">Explore UI Visualizations</button>
-          <button class="btn btn-accent btn-arrow" onclick="scrollSection('cat-specs')">Benchmarks &amp; Specs</button>
+          <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Portable-Windows-x64.zip" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <span>Portable .zip (241 MB)</span>
+          </a>
+          <button class="btn btn-accent btn-arrow" onclick="scrollSection('cat-specs')">Specs</button>
         </div>
       </div>
     </section>
@@ -1451,12 +1453,12 @@
         <div class="grid-3">
           <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; border-color: var(--border-strong);">
             <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent);">STEP 01</div>
-            <h3 style="color: #ffffff; font-size: 17px;">Download &amp; Extract</h3>
+            <h3 style="color: #ffffff; font-size: 17px;">Run the Setup Executable</h3>
             <p style="color: var(--muted); font-size: 13px; line-height: 1.5;">
-              Download the self-contained portable release (~240 MB). Unpack the folder to any drive or USB flash disk. No registry edits.
+              Download <b style="color: #ffffff;">Litwave-Setup-v0.1.0-x64.exe</b> (~175 MB). Check "Create a desktop shortcut" and install cleanly to Program Files.
             </p>
             <div style="margin-top: auto; padding-top: 8px;">
-              <code style="font-size: 11px; color: var(--accent); font-family: var(--font-mono); background: var(--sunken); padding: 4px 8px; border-radius: 4px; display: inline-block;">Litwave-Portable-Windows-x64.zip</code>
+              <code style="font-size: 11px; color: var(--accent); font-family: var(--font-mono); background: var(--sunken); padding: 4px 8px; border-radius: 4px; display: inline-block;">Litwave-Setup-v0.1.0-x64.exe</code>
             </div>
           </div>
 
@@ -1476,12 +1478,12 @@
 
           <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px; border-color: var(--border-strong);">
             <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent);">STEP 03</div>
-            <h3 style="color: #ffffff; font-size: 17px;">Run Litwave</h3>
+            <h3 style="color: #ffffff; font-size: 17px;">Launch &amp; Practice</h3>
             <p style="color: var(--muted); font-size: 13px; line-height: 1.5;">
-              Double-click <b style="color: #ffffff;">Litwave.bat</b> (or <b style="color: #ffffff;">Litwave.vbs</b>). It boots the background engine and opens native Edge app mode in &lt; 1s.
+              Click your Desktop shortcut or Start Menu icon. Litwave launches Edge App mode instantly at <code style="color: var(--accent); font-family: var(--font-mono);">127.0.0.1:8080</code>.
             </p>
             <div style="margin-top: auto; padding-top: 8px;">
-              <code style="font-size: 11px; color: var(--accent); font-family: var(--font-mono); background: var(--sunken); padding: 4px 8px; border-radius: 4px; display: inline-block;">127.0.0.1:8080 (--app mode)</code>
+              <span style="font-size: 11px; color: var(--muted); font-family: var(--font-mono);">Clean 1-Click Windows Uninstaller Included</span>
             </div>
           </div>
         </div>
