@@ -1615,7 +1615,7 @@
             <div id="pipe-node-3" class="studio-panel" style="transition: all 0.3s ease; border-color: var(--border); background: var(--surface);">
               <div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">NODE 03 &bull; BROADCAST</div>
               <div style="font-weight: 700; color: #ffffff; font-size: 14px; margin-top: 4px;">Starlette /ws Bus</div>
-              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">25 FPS non-blocking telemetry serialization.</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">25 FPS non-blocking telemetry serialization system.</div>
               <div style="font-family: var(--font-mono); font-size: 10px; color: var(--success); margin-top: 8px;">RATE: 25 FPS REFRESH</div>
             </div>
 
@@ -1841,7 +1841,7 @@
       if (featSec) {
         const rect = featSec.getBoundingClientRect();
         const winH = window.innerHeight;
-        const triggerStart = winH * 0.70;
+        const triggerStart = winH * 0.55;
         const triggerEnd = winH * 0.10;
         if (rect.top <= triggerStart && rect.bottom >= triggerEnd) {
           const rawProgress = (triggerStart - rect.top) / (triggerStart - triggerEnd);
