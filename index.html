@@ -266,24 +266,36 @@
         display: block !important;
       }
 
-      /* Hero Section Spacing on Mobile */
+      /* Hero Section Spacing on Mobile: Dedicated full first-screen presence */
+      #cat-overview {
+        min-height: 100svh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 70px) !important;
+        padding-bottom: 40px !important;
+        box-sizing: border-box !important;
+      }
       .hero-center {
-        padding-top: 24px;
+        padding-top: 0;
+        margin: auto 0;
       }
       .hero-center h1 {
-        font-size: 30px !important;
+        font-size: 32px !important;
         line-height: 1.15;
       }
       .hero-center .lead {
-        font-size: 13.5px;
+        font-size: 14px;
         line-height: 1.55;
-        margin-top: 12px;
+        margin-top: 14px;
       }
       .hero-cta {
         flex-direction: column;
         width: 100%;
+        max-width: 320px;
+        margin: 24px auto 0;
         gap: 10px;
-        margin-top: 20px;
       }
       .hero-cta .btn, .hero-cta a.btn {
         width: 100%;
