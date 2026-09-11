@@ -204,11 +204,64 @@
       border: 1px solid transparent;
       outline: none;
       box-shadow: none;
+      position: relative;
+      overflow: hidden; /* Clips the bottom pulse glow neatly to the pill curvature */
       transition: max-width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                   background 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                   border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                   box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: auto;
+    }
+
+    /* Bottom energetic pulse line matching the liquid glass border thickness (1px) */
+    .topnav-bottom-pulse {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      overflow: hidden;
+    }
+    .topnav-bottom-pulse::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 32%;
+      background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 20%, #38bdf8 50%, #ffffff 70%, rgba(56, 189, 248, 0.8) 85%, transparent 100%);
+      box-shadow: 0 0 8px #38bdf8, 0 -1px 6px rgba(56, 189, 248, 0.5);
+      opacity: 0;
+    }
+
+    .topnav-wrap.scrolled .topnav-bottom-pulse {
+      opacity: 1;
+    }
+    .topnav-wrap.scrolled .topnav-bottom-pulse::after {
+      opacity: 1;
+      /* 1.0s forward + 0.2s pause + 1.0s backward + 0.2s pause = 2.4s total loop */
+      animation: pulsePingPong 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    }
+
+    @keyframes pulsePingPong {
+      0% {
+        transform: translateX(-100%);
+      }
+      41.66% { /* 1.0s / 2.4s */
+        transform: translateX(312%); /* Reaches far right */
+      }
+      50.0% { /* 1.2s / 2.4s: 0.2s rest at right */
+        transform: translateX(312%);
+      }
+      91.66% { /* 2.2s / 2.4s: returns to left in 1.0s */
+        transform: translateX(-100%);
+      }
+      100% { /* 2.4s / 2.4s: 0.2s rest at left before re-triggering */
+        transform: translateX(-100%);
+      }
     }
 
     .topnav-inner {
@@ -942,13 +995,15 @@
             </div>
           </div>
           <a href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Setup-v0.1.0-x64.exe" class="nav-dl-pill" title="Download Litwave Installer (.exe)">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>v0.1.0 (.exe)</span>
-          </a>
-        </nav>
-      </div>
-    </header>
-  </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>v0.1.0 (.exe)</span>
+            </a>
+          </nav>
+          </div>
+          <!-- Animated Bottom Energetic Pulse Line for Liquid Glass Capsule -->
+          <div class="topnav-bottom-pulse"></div>
+          </header>
+          </div>
 
   <main id="content">
     <!-- ══════════════════════════════════════════════════════════════════
