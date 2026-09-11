@@ -144,71 +144,94 @@
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap-md); }
     .grid-1-2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: var(--gap-xl); align-items: start; }
 
-    /* Responsive Mobile Overrides (Full Phone Parity) */
+    /* Responsive Mobile Overrides (Mobile Mode) */
     @media (max-width: 768px) {
+      /* 1. Header is clean & transparent at top, only pops out into liquid glass on scroll */
       .topnav-wrap {
-        padding-top: 8px;
-        padding-inline: 10px;
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-inline: 12px;
+      }
+      .topnav {
+        width: 100%;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
       }
       .topnav-wrap.scrolled {
-        padding-top: 8px;
-        padding-inline: 8px;
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-inline: 10px;
       }
-      .topnav, .topnav-wrap.scrolled .topnav {
+      .topnav-wrap.scrolled .topnav {
         width: 100%;
-        max-width: 100%;
         border-radius: 20px;
-        background: rgba(10, 13, 18, 0.92) !important;
+        background: rgba(10, 13, 18, 0.90) !important;
         backdrop-filter: blur(20px) saturate(190%) !important;
         -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75) !important;
       }
-      .topnav-inner, .topnav-wrap.scrolled .topnav-inner {
-        padding: 8px 12px;
-        gap: 10px;
+      .topnav-inner {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .topnav-wrap.scrolled .topnav-inner {
+        padding: 7px 12px;
+        gap: 8px;
       }
       .topnav .brand-name {
         font-size: 15px;
       }
       .header-nav {
-        gap: 8px;
+        gap: 6px;
       }
-      .header-nav a:not(.nav-dl-pill),
-      .topnav-wrap.scrolled .header-nav a:not(.nav-dl-pill) {
-        display: none; /* Hide top items on phones to avoid squishing/overflow */
-      }
-      .header-nav a:first-child {
-        display: inline-block !important; /* Keep 'Overview' or core anchor */
-        font-size: 11.5px;
+      .header-nav a:not(.nav-dl-pill) {
+        display: none !important;
       }
       .nav-drop-btn {
-        font-size: 11.5px;
+        font-size: 11px;
         padding: 3px 6px;
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 4px;
       }
       .nav-dl-pill {
         padding: 3px 7px;
-        font-size: 11px !important;
+        font-size: 10.5px !important;
       }
       .nav-drop-menu {
-        right: -10px;
-        min-width: 160px;
+        right: 0;
+        min-width: 165px;
+      }
+
+      /* 2. Mobile Mode: Hide heavy, bulky Desktop UI visual mockups */
+      #cat-visuals .studio-mockup-frame,
+      #cat-visuals .remote-mockup-frame,
+      #cat-visuals .view-toggle-bar {
+        display: none !important;
+      }
+      .mobile-architecture-summary {
+        display: block !important;
       }
 
       /* Hero Section Spacing on Mobile */
+      .hero-center {
+        padding-top: 24px;
+      }
       .hero-center h1 {
-        font-size: 32px !important;
+        font-size: 30px !important;
         line-height: 1.15;
       }
       .hero-center .lead {
-        font-size: 14px;
-        margin-top: 14px;
+        font-size: 13.5px;
+        line-height: 1.55;
+        margin-top: 12px;
       }
       .hero-cta {
         flex-direction: column;
         width: 100%;
         gap: 10px;
+        margin-top: 20px;
       }
       .hero-cta .btn, .hero-cta a.btn {
         width: 100%;
@@ -220,7 +243,7 @@
         padding-inline: 16px;
       }
       .category-page {
-        padding-block: 42px;
+        padding-block: 36px;
       }
 
       /* Sound Lab & Sampler Pad Mobile Flow */
@@ -238,7 +261,7 @@
         gap: 6px;
       }
       .drone-key {
-        height: 42px;
+        height: 40px;
         font-size: 12px;
       }
       .sampler-btn {
@@ -247,8 +270,13 @@
 
       /* Benchmark Metrics */
       .stat-gradient {
-        font-size: 40px !important;
+        font-size: 38px !important;
       }
+    }
+
+    /* Fallback for desktop: hide the mobile architecture text cards */
+    .mobile-architecture-summary {
+      display: none;
     }
 
     @media (max-width: 920px) {
@@ -1361,6 +1389,27 @@
             </div>
           </div>
         </div>
+
+        <!-- 3. Mobile Mode Text-First Architecture Summary (Replaces heavy visual mockup on phones) -->
+        <div class="mobile-architecture-summary" style="text-align: left; margin-top: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="card" style="padding: 16px; background: var(--surface); border-color: var(--border-strong);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent); text-transform: uppercase;">01 &bull; DESKTOP STUDIO WORKSTATION</div>
+              <h3 style="color: #ffffff; font-size: 15px; margin: 4px 0 6px;">Zero-Distraction Practice Cockpit</h3>
+              <p style="font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.5;">
+                Sample-accurate audio playback, A/B section looping, automated Nashville chord progression tracking, and an integrated 8-part mixer.
+              </p>
+            </div>
+
+            <div class="card" style="padding: 16px; background: var(--surface); border-color: var(--border-strong);">
+              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--success); text-transform: uppercase;">02 &bull; STAGE REMOTE PWA (/remote)</div>
+              <h3 style="color: #ffffff; font-size: 15px; margin: 4px 0 6px;">Music Stand Touch Companion</h3>
+              <p style="font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.5;">
+                Giant 72px real-time chord display, thumb-triggered worship drone anchor, and bi-directional setlist switching from any phone or iPad.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1995,31 +2044,31 @@
     const topnavWrap = document.getElementById('topnav-wrap');
     let isHeaderScrolled = false;
 
-    window.addEventListener('scroll', () => {
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-      // Triggers popout at 35px, immediately snaps back the instant user reaches top (< 30px)
-      if (!isHeaderScrolled && scrollY > 35) {
+    function handleScroll() {
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      const isMobile = window.innerWidth <= 768;
+      const triggerThreshold = isMobile ? 20 : 35;
+      const resetThreshold = isMobile ? 12 : 30;
+
+      if (!isHeaderScrolled && scrollY > triggerThreshold) {
         isHeaderScrolled = true;
         topnavWrap.classList.add('scrolled');
-      } else if (isHeaderScrolled && scrollY <= 30) {
+      } else if (isHeaderScrolled && scrollY <= resetThreshold) {
         isHeaderScrolled = false;
         topnavWrap.classList.remove('scrolled');
       }
 
-      // A. Dynamic Performance Telemetry Animation (Benchmarks Section)
-      // Starts when user has scrolled the gauge card well into view (starts at 30% from bottom, eases smoothly)
+      // Dynamic Performance Telemetry Animation (Benchmarks Section)
       const specsSec = document.getElementById('cat-specs');
       if (specsSec) {
         const rect = specsSec.getBoundingClientRect();
         const winH = window.innerHeight;
-        // Trigger only once the card enters the central viewport (between 25% from bottom and 9% from top)
         const triggerStart = winH * 0.75;
         const triggerEnd = winH * 0.09;
         if (rect.top <= triggerStart && rect.bottom >= triggerEnd) {
           const rawProgress = (triggerStart - rect.top) / (triggerStart - triggerEnd);
           const progress = Math.min(1, Math.max(0, rawProgress));
           
-          // Smooth progressive animation
           const importBar = document.getElementById('perf-import-bar');
           if (importBar) importBar.style.width = (progress * 93.1).toFixed(1) + '%';
           
@@ -2031,13 +2080,12 @@
         }
       }
 
-      // B. Signal Pipeline Flow Animation (#2 Approved)
-      // Progresses smoothly while the user is actively viewing the hardware schematic card
+      // Signal Pipeline Flow Animation
       const featSec = document.getElementById('cat-features');
       if (featSec) {
         const rect = featSec.getBoundingClientRect();
         const winH = window.innerHeight;
-        const triggerStart = winH * 0.55;
+        const triggerStart = winH * 0.70;
         const triggerEnd = winH * 0.10;
         if (rect.top <= triggerStart && rect.bottom >= triggerEnd) {
           const rawProgress = (triggerStart - rect.top) / (triggerStart - triggerEnd);
@@ -2048,7 +2096,6 @@
             pulseBar.style.left = (progress * 75).toFixed(1) + '%';
           }
 
-          // Sequential node illumination paced with scroll progress
           const n1 = document.getElementById('pipe-node-1');
           const n2 = document.getElementById('pipe-node-2');
           const n3 = document.getElementById('pipe-node-3');
@@ -2060,7 +2107,11 @@
           if (n4) n4.style.borderColor = progress > 0.88 ? 'var(--accent)' : 'var(--border)';
         }
       }
-    }, { passive: true });
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Run once on initial load to ensure correct clean state
+    handleScroll();
 
     function scrollSection(id) {
       const el = document.getElementById(id);
