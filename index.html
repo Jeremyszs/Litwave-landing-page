@@ -70,6 +70,7 @@
       -webkit-text-size-adjust: 100%;
       background: var(--bg);
       scroll-behavior: smooth;
+      scroll-snap-type: y proximity;
     }
 
     body {
@@ -129,10 +130,12 @@
       position: relative;
       z-index: 1;
       min-height: 100vh;
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding-block: clamp(60px, 8vh, 90px);
+      scroll-snap-align: start;
     }
 
     .stack { display: flex; flex-direction: column; }
@@ -265,12 +268,17 @@
         box-sizing: border-box;
       }
 
-      /* Container & Section Padding */
+      /* Container & Section Padding: Full Screen Page Per Category on Mobile */
       .container {
-        padding-inline: 16px;
+        padding-inline: 18px;
       }
       .category-page {
-        padding-block: 36px;
+        min-height: 100svh !important; /* Mobile viewport fill */
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-block: clamp(48px, 8svh, 68px) !important;
       }
 
       /* Sound Lab & Sampler Pad Mobile Flow */
@@ -308,7 +316,6 @@
 
     @media (max-width: 920px) {
       .grid-2, .grid-3, .grid-4, .grid-1-2 { grid-template-columns: 1fr; gap: var(--gap-md); }
-      .category-page { min-height: auto; padding-block: 56px; }
     }
 
     /* Typography */
