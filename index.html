@@ -155,7 +155,7 @@
       /* 1. Header: always anchored with generous margin from top bar (never touches edge when Chrome sinks) */
       .topnav-wrap {
         padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
-        padding-inline: 14px !important;
+        padding-inline: 16px !important;
       }
       .topnav {
         width: 100%;
@@ -167,7 +167,7 @@
       }
       .topnav-wrap.scrolled {
         padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
-        padding-inline: 14px !important;
+        padding-inline: 16px !important;
       }
       .topnav-wrap.scrolled .topnav {
         width: 100%;
@@ -194,20 +194,9 @@
       .header-nav {
         gap: 6px;
       }
-      .header-nav a:not(.nav-dl-pill) {
+      /* Hide all inline links in the bar except the download button */
+      .header-nav > a {
         display: none !important;
-      }
-      /* Ensure the links inside the dropdown menu remain visible */
-      .nav-drop-menu a {
-        display: block !important;
-        font-size: 13px !important;
-        color: var(--muted) !important;
-        padding: 8px 12px !important;
-      }
-      .nav-drop-menu a:hover,
-      .nav-drop-menu a:active {
-        color: #ffffff !important;
-        background: rgba(56, 189, 248, 0.15) !important;
       }
       .nav-drop-btn {
         font-size: 11.5px;
@@ -216,26 +205,42 @@
         border-radius: 0;
       }
       .nav-dl-pill {
+        display: inline-flex !important;
         padding: 3px 7px;
         font-size: 10.5px !important;
       }
       .nav-drop-menu {
-        top: calc(100% + 14px);
-        right: -10px;
-        min-width: 175px;
+        top: calc(100% + 14px) !important;
+        right: 0 !important;
+        min-width: 175px !important;
         background: rgba(10, 13, 18, 0.98) !important;
         backdrop-filter: blur(24px) saturate(190%) !important;
         -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95) !important;
-        display: none;
+        display: none !important;
         z-index: 9999 !important;
       }
       .nav-dropdown.open .nav-drop-menu {
         display: flex !important;
+        flex-direction: column !important;
         visibility: visible !important;
         opacity: 1 !important;
         pointer-events: auto !important;
+      }
+      /* Ensure the links inside the dropdown menu display clearly as list rows */
+      .nav-drop-menu a {
+        display: block !important;
+        font-size: 13px !important;
+        color: var(--muted) !important;
+        padding: 10px 14px !important;
+        border-radius: 6px;
+        text-decoration: none !important;
+      }
+      .nav-drop-menu a:hover,
+      .nav-drop-menu a:active {
+        color: #ffffff !important;
+        background: rgba(56, 189, 248, 0.15) !important;
       }
 
       /* Rehearsal Setlist Scene buttons on mobile: full width, clean vertical auto-height */
@@ -285,17 +290,18 @@
         box-sizing: border-box;
       }
 
-      /* Container & Section Padding: Full Screen Page Per Category on Mobile */
+      /* Container & Section Padding: Calibrated Breathing Space on Mobile */
       .container {
         padding-inline: 18px;
       }
       .category-page {
-        min-height: 100svh !important; /* Mobile viewport fill */
+        min-height: auto !important; /* Allow natural, non-forced scroll height */
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        padding-block: clamp(48px, 8svh, 68px) !important;
+        justify-content: flex-start;
+        padding-block: 56px 40px !important; /* Consistent, comfortable margin between every category */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Subtle separation hairline */
       }
 
       /* Sound Lab & Sampler Pad Mobile Flow */
@@ -630,12 +636,7 @@
     }
 
     @media (max-width: 720px) {
-      .header-nav a:nth-child(2), /* Visuals */
-      .header-nav a:nth-child(4)  /* Specs */
-      { display: none; }
-      .topnav-wrap { padding-inline: 8px; }
-      
-      /* Mobile Hero Spacing */
+      /* Clean hero and layout adaptations */
       .hero-center h1 {
         font-size: clamp(28px, 8vw, 36px) !important;
         letter-spacing: -0.03em;
