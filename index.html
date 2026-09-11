@@ -144,6 +144,113 @@
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap-md); }
     .grid-1-2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: var(--gap-xl); align-items: start; }
 
+    /* Responsive Mobile Overrides (Full Phone Parity) */
+    @media (max-width: 768px) {
+      .topnav-wrap {
+        padding-top: 8px;
+        padding-inline: 10px;
+      }
+      .topnav-wrap.scrolled {
+        padding-top: 8px;
+        padding-inline: 8px;
+      }
+      .topnav, .topnav-wrap.scrolled .topnav {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px;
+        background: rgba(10, 13, 18, 0.92) !important;
+        backdrop-filter: blur(20px) saturate(190%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      }
+      .topnav-inner, .topnav-wrap.scrolled .topnav-inner {
+        padding: 8px 12px;
+        gap: 10px;
+      }
+      .topnav .brand-name {
+        font-size: 15px;
+      }
+      .header-nav {
+        gap: 8px;
+      }
+      .header-nav a:not(.nav-dl-pill),
+      .topnav-wrap.scrolled .header-nav a:not(.nav-dl-pill) {
+        display: none; /* Hide top items on phones to avoid squishing/overflow */
+      }
+      .header-nav a:first-child {
+        display: inline-block !important; /* Keep 'Overview' or core anchor */
+        font-size: 11.5px;
+      }
+      .nav-drop-btn {
+        font-size: 11.5px;
+        padding: 3px 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 4px;
+      }
+      .nav-dl-pill {
+        padding: 3px 7px;
+        font-size: 11px !important;
+      }
+      .nav-drop-menu {
+        right: -10px;
+        min-width: 160px;
+      }
+
+      /* Hero Section Spacing on Mobile */
+      .hero-center h1 {
+        font-size: 32px !important;
+        line-height: 1.15;
+      }
+      .hero-center .lead {
+        font-size: 14px;
+        margin-top: 14px;
+      }
+      .hero-cta {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+      }
+      .hero-cta .btn, .hero-cta a.btn {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Container & Section Padding */
+      .container {
+        padding-inline: 16px;
+      }
+      .category-page {
+        padding-block: 42px;
+      }
+
+      /* Sound Lab & Sampler Pad Mobile Flow */
+      .lab-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px 14px;
+      }
+      .lab-body {
+        padding: 14px;
+        gap: 16px;
+      }
+      .drone-grid, .sampler-grid {
+        gap: 6px;
+      }
+      .drone-key {
+        height: 42px;
+        font-size: 12px;
+      }
+      .sampler-btn {
+        font-size: 10px;
+      }
+
+      /* Benchmark Metrics */
+      .stat-gradient {
+        font-size: 40px !important;
+      }
+    }
+
     @media (max-width: 920px) {
       .grid-2, .grid-3, .grid-4, .grid-1-2 { grid-template-columns: 1fr; gap: var(--gap-md); }
       .category-page { min-height: auto; padding-block: 56px; }
@@ -182,12 +289,13 @@
     .num  { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
     /* ─── Floating Liquid Glass Header ──────────────────────────────── */
+    /* Topnav wrap: pointer-events auto only for children */
     .topnav-wrap {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 999; /* Ensure header always stays on top of any canvas or section */
       display: flex;
       justify-content: center;
       padding-top: 18px;
@@ -323,6 +431,26 @@
     .topnav-wrap.scrolled .header-nav {
       gap: 11px;
     }
+
+    @media (max-width: 640px) {
+      .grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .grid-2 {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      /* Pipeline card in Section 5 */
+      div[style*="grid-template-columns: repeat(4, 1fr)"] {
+        grid-template-columns: 1fr !important;
+      }
+      /* Benchmark stat 3-col in Section 6 */
+      div[style*="grid-template-columns: repeat(3, 1fr)"] {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+      }
+    }
     .header-nav a {
       font-size: 12.5px;
       font-weight: 500;
@@ -433,7 +561,75 @@
       .header-nav a:nth-child(2), /* Visuals */
       .header-nav a:nth-child(4)  /* Specs */
       { display: none; }
-      .topnav-wrap { padding-inline: 10px; }
+      .topnav-wrap { padding-inline: 8px; }
+      
+      /* Mobile Hero Spacing */
+      .hero-center h1 {
+        font-size: clamp(28px, 8vw, 36px) !important;
+        letter-spacing: -0.03em;
+      }
+      .hero-center .lead {
+        font-size: 13.5px;
+        line-height: 1.5;
+        margin-top: 14px;
+      }
+      .hero-cta {
+        flex-direction: column;
+        width: 100%;
+        max-width: 320px;
+        margin: 20px auto 0;
+        gap: 8px;
+      }
+      .hero-cta .btn, .hero-cta a.btn {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 12.5px;
+        box-sizing: border-box;
+      }
+
+      /* Remote Mockup View on Phones */
+      .remote-mockup-frame {
+        width: 100% !important;
+        max-width: 340px !important;
+        margin: 0 auto !important;
+      }
+      .view-toggle-bar {
+        width: 100%;
+        max-width: 340px;
+        margin: 0 auto 20px;
+      }
+      .view-toggle-btn {
+        font-size: 11px;
+        padding: 6px 8px;
+      }
+
+      /* Studio Grid in Section 2 */
+      .studio-grid {
+        grid-template-columns: 1fr !important;
+        padding: 12px !important;
+        gap: 12px !important;
+      }
+      .fader-deck {
+        gap: 8px !important;
+      }
+
+      /* Documentation Split */
+      .grid-1-2 {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .doc-nav-list {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 6px;
+        padding-bottom: 4px;
+      }
+      .doc-nav-btn {
+        white-space: nowrap;
+        font-size: 11px;
+        padding: 6px 10px;
+      }
     }
 
     /* Buttons */
