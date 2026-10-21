@@ -398,7 +398,7 @@
     requestAnimationFrame(draw);
   })();
 
-  /* ───────────── Phone stage remote ───────────── */
+  /* ───────────── Phone remote preview ───────────── */
   (function phone() {
     const screen = $('phoneScreen'), tabbar = $('tabbar'), title = document.querySelector('.phone-title');
     const TABS = [
