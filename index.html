@@ -13,26 +13,33 @@
 </head>
 <body>
 
-<!-- ───────── Header (mirrors the app's 48px studio header) ───────── -->
-<header class="app-header">
-  <a href="#top" class="brand"><span class="app-title">Litwave</span></a>
-  <nav class="header-nav lg cap" id="headerNav" aria-label="Sections">
-    <a href="#features">Features</a>
-    <a href="#chords">Chords</a>
-    <a href="#lab">Sound lab</a>
-    <a href="#remote">Stage remote</a>
-    <a href="#practice">Ear training</a>
-    <a href="#get">Get started</a>
-  </nav>
-  <div class="header-actions">
-    <button class="ib" id="themeToggle" type="button" aria-label="Toggle light and dark theme"></button>
-    <a class="btn primary btn-header" href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Setup-v0.1.0-x64.exe">
-      <svg class="ico" width="15" height="15" viewBox="0 0 24 24"><path d="M12 15V3 M7 10l5 5 5-5 M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-      <span>Download</span>
-    </a>
-    <button class="ib menu-toggle" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="headerNav">
-      <svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d="M4 7h16 M4 12h16 M4 17h16"/></svg>
-    </button>
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<!-- ───────── Header: docked flush at the top, floats as a liquid glass pill once you scroll ───────── -->
+<header class="app-header" id="appHeader">
+  <div class="nav-shell" id="navShell">
+    <span class="nav-sheen" aria-hidden="true"></span>
+    <a href="#top" class="brand"><span class="app-title">Litwave</span></a>
+    <nav class="header-nav" id="headerNav" aria-label="Sections">
+      <span class="nav-ind" id="navInd" aria-hidden="true"></span>
+      <a href="#features">Features</a>
+      <a href="#chords">Chords</a>
+      <a href="#lab">Sound lab</a>
+      <a href="#remote">Stage remote</a>
+      <a href="#practice">Ear training</a>
+      <a href="#get">Get started</a>
+    </nav>
+    <div class="header-actions">
+      <button class="ib" id="themeToggle" type="button" aria-label="Toggle light and dark theme"></button>
+      <a class="btn primary btn-header" href="https://github.com/Jeremyszs/Litwave/releases/latest/download/Litwave-Setup-v0.1.0-x64.exe">
+        <svg class="ico" width="15" height="15" viewBox="0 0 24 24"><path d="M12 15V3 M7 10l5 5 5-5 M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <span>Download</span>
+      </a>
+      <button class="ib menu-toggle" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="headerNav">
+        <svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d="M4 7h16 M4 12h16 M4 17h16"/></svg>
+      </button>
+    </div>
+    <span class="nav-progress" id="navProgress" aria-hidden="true"></span>
   </div>
 </header>
 
@@ -59,7 +66,7 @@
     </div>
 
     <!-- Live recreation of the desktop studio -->
-    <div class="studio-window" aria-label="Preview of the Litwave desktop studio" id="heroStudio">
+    <div class="hero-stage"><div class="studio-window" aria-label="Preview of the Litwave desktop studio" id="heroStudio">
       <aside class="card sw-side" aria-hidden="true">
         <div class="sw-brand"><b>Litwave</b></div>
         <div class="lbl">Setlist</div>
@@ -108,7 +115,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div></div>
   </section>
 
   <!-- ───────── Key numbers ───────── -->
@@ -119,6 +126,11 @@
     <div class="stat"><span class="stat-num mono">8</span><span class="stat-label">Scene presets for mixer snapshots</span></div>
     <div class="stat"><span class="stat-num mono">2</span><span class="stat-label">Sound engines: Montage M or SoundFont</span></div>
   </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track">
+    <span>A–B loop</span><span>Nashville numbers</span><span>48 FX pads</span><span>Ambient drone</span><span>Key shift</span><span>Scene presets</span><span>Ear training</span><span>Setlists</span><span>Phone remote</span><span>Voicing audition</span>
+    <span>A–B loop</span><span>Nashville numbers</span><span>48 FX pads</span><span>Ambient drone</span><span>Key shift</span><span>Scene presets</span><span>Ear training</span><span>Setlists</span><span>Phone remote</span><span>Voicing audition</span>
+  </div></div>
 
   <!-- ───────── Features ───────── -->
   <section class="section container" id="features">
