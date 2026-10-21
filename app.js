@@ -25,13 +25,13 @@
   const themeListeners = [];
   function paintThemeBtn() {
     const dark = root.getAttribute('data-theme') !== 'light';
-    themeBtn.innerHTML = `<svg class="ico" width="17" height="17" viewBox="0 0 24 24"><path d="${dark ? SUN : MOON}"/></svg>`;
+    themeBtn.innerHTML = `<svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d="${dark ? SUN : MOON}"/></svg>`;
     themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
   }
   themeBtn.addEventListener('click', () => {
     const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     root.setAttribute('data-theme', next);
-    try { localStorage.setItem('litwave-theme', next); } catch (e) {}
+    try { localStorage.setItem('lw-theme', next); } catch (e) {}
     paintThemeBtn();
     themeListeners.forEach((f) => f());
   });
@@ -68,10 +68,9 @@
     const timeEl = $('heroTime'), btn = $('heroPlay'), icon = $('heroPlayIcon');
     const LOOP_A = 0.36, LOOP_B = 0.52, TOTAL = 276;
     const PLAY = 'M7 4.5v15l12.5-7.5z', PAUSE = 'M6 5h4.5v14H6z M13.5 5H18v14h-4.5z';
-    // chorus of the app's demo song, in E major
     const prog = [['E/G#', '1/3'], ['B', '5'], ['A', '4'], ['Bsus4', '5sus']];
 
-    const N = 200, env = [];
+    const N = 150, env = [];
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < N; i++) {
@@ -86,22 +85,22 @@
       const ctx = canvas.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      const bw = w / N, accent = cssVar('--accent'), base = cssVar('--wave');
+      const bw = w / N, accent = cssVar('--accent'), dim = cssVar('--wave-dim');
       const mid = h / 2;
       for (let i = 0; i < N; i++) {
-        const t = i / N, played = t < pos;
+        const t = i / N;
         const bh = Math.max(3, env[i] * (h * .8));
-        ctx.fillStyle = played ? accent : base;
+        ctx.fillStyle = t < pos ? accent : dim;
         const x = i * bw + 1, bwid = Math.max(1.5, bw - 2);
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x, mid - bh / 2, bwid, bh, 1.5); else ctx.rect(x, mid - bh / 2, bwid, bh);
+        if (ctx.roundRect) ctx.roundRect(x, mid - bh / 2, bwid, bh, bwid / 2); else ctx.rect(x, mid - bh / 2, bwid, bh);
         ctx.fill();
       }
     }
     loop.style.left = LOOP_A * 100 + '%';
     loop.style.width = (LOOP_B - LOOP_A) * 100 + '%';
 
-    const chordEl = $('heroChord'), nextEl = $('heroNext'), nashEl = $('heroNash'), nashNextEl = $('heroNashNext'), barEl = $('heroBar'), beatsEl = $('heroBeats');
+    const chordEl = $('heroChord'), nextEl = $('heroNext'), nashEl = $('heroNash'), nashNextEl = $('heroNashNext'), barEl = $('heroBar'), beatN = $('heroBeatN'), ring = $('heroRing');
     const mm = (sec) => String(Math.floor(sec / 60)).padStart(2, '0') + ':' + (sec % 60).toFixed(1).padStart(4, '0');
 
     let pos = LOOP_A + .03, playing = !reduceMotion, visible = true, last = 0, lastIdx = -1, lastDraw = 0;
@@ -110,8 +109,9 @@
       timeEl.innerHTML = `${mm(pos * TOTAL)} <i>/ ${mm(TOTAL)}</i>`;
       const span = (pos - LOOP_A) / (LOOP_B - LOOP_A);
       const idx = Math.min(3, Math.max(0, Math.floor(span * 4)));
-      const beat = 4 - Math.min(3, Math.floor(((span * 4) % 1) * 4));
-      beatsEl.textContent = beat + (beat === 1 ? ' beat' : ' beats');
+      const frac = (span * 4) % 1;
+      beatN.textContent = 4 - Math.min(3, Math.floor(frac * 4));
+      ring.style.strokeDashoffset = (150.8 * frac).toFixed(1);
       if (idx !== lastIdx) {
         lastIdx = idx;
         const c = prog[idx], n = prog[(idx + 1) % 4];
@@ -120,22 +120,17 @@
         barEl.textContent = `Chorus · bar ${idx + 1}/4`;
       }
     }
-    function setPlaying(p) {
-      playing = p;
-      icon.innerHTML = `<path d="${p ? PAUSE : PLAY}"/>`;
-    }
+    function setPlaying(p) { playing = p; icon.innerHTML = `<path d="${p ? PAUSE : PLAY}"/>`; }
     btn.addEventListener('click', () => setPlaying(!playing));
     setPlaying(playing);
     drawWave(); render();
     window.addEventListener('resize', drawWave);
     themeListeners.push(drawWave);
 
-    // mixer sliders
-    const rows = [...document.querySelectorAll('#heroMixer .mix-row')];
-    rows.forEach((g) => {
+    document.querySelectorAll('#heroMixer .vf').forEach((g) => {
       const v = parseFloat(g.dataset.v);
-      g.querySelector('.slider i').style.width = v * 100 + '%';
-      g.querySelector('.slider b').style.left = v * 100 + '%';
+      g.querySelector('.vtrack i').style.height = v * 100 + '%';
+      g.querySelector('.vtrack b').style.bottom = v * 100 + '%';
     });
 
     function frame(ts) {
@@ -148,11 +143,6 @@
         render();
         if (ts - lastDraw > 120) { lastDraw = ts; drawWave(); }
       }
-      rows.forEach((g, i) => {
-        const base = parseFloat(g.dataset.v);
-        const m = playing ? base * (.4 + .55 * Math.abs(Math.sin(ts / (260 + i * 90) + i))) : 0.03;
-        g.querySelector('.slider em').style.width = Math.min(100, m * 100) + '%';
-      });
     }
     whenVisible($('heroStudio'), (v) => { visible = v; });
     requestAnimationFrame(frame);
@@ -249,7 +239,8 @@
     E: ['pad', 'click', 'click', 'thump', 'noise', 'noise', 'drop', 'sweep'],
     F: ['stab', 'glitch', 'down', 'drop', 'chime', 'click', 'pad', 'noise']
   };
-  const padColor = (i) => `var(--p${(i % 6) + 1})`;
+  const PAD_COLORS = ['#FF453A', '#FF9F0A', '#FFD60A', '#30D158', '#64D2FF', '#0A84FF', '#5E5CE6', '#FF375F'];
+  const padColor = (i) => PAD_COLORS[i % 8];
 
   function noiseBuf(dur) {
     const n = Math.floor(ctx.sampleRate * dur), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
@@ -313,7 +304,7 @@
       BANKS[bank][2].forEach(([name, sample], i) => {
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'fx-pad-btn';
-        b.style.setProperty('--c', padColor(i));
+        b.style.setProperty('--pc', padColor(i));
         b.innerHTML = `<span class="pn">${bank}${i + 1}</span><span class="pl">${name}</span>`;
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); trigger(b, bank, i, sample); });
         b.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); trigger(b, bank, i, sample); } });
@@ -388,11 +379,11 @@
       requestAnimationFrame(draw);
       if (!visible) return;
       c2.clearRect(0, 0, w, h);
-      c2.strokeStyle = cssVar('--line'); c2.lineWidth = 1; c2.beginPath();
+      c2.strokeStyle = cssVar('--sep'); c2.lineWidth = 1; c2.beginPath();
       for (let x = 0; x <= w; x += w / 8) { c2.moveTo(x, 0); c2.lineTo(x, h); }
       for (let y = 0; y <= h; y += h / 4) { c2.moveTo(0, y); c2.lineTo(w, y); }
       c2.stroke();
-      c2.strokeStyle = cssVar('--accent'); c2.lineWidth = 2; c2.shadowColor = cssVar('--accent-glow'); c2.shadowBlur = 8; c2.beginPath();
+      c2.strokeStyle = cssVar('--accent'); c2.lineWidth = 2; c2.shadowColor = cssVar('--tint2'); c2.shadowBlur = 8; c2.beginPath();
       if (analyser) {
         analyser.getByteTimeDomainData(data);
         // find a rising zero crossing so the trace holds still
@@ -409,12 +400,13 @@
 
   /* ───────────── Phone stage remote ───────────── */
   (function phone() {
-    const screen = $('phoneScreen'), tabbar = $('tabbar');
+    const screen = $('phoneScreen'), tabbar = $('tabbar'), title = document.querySelector('.phone-title');
     const TABS = [
       ['Stage', 'M9 18V5l12-2v13 M9 18a3 3 0 1 1-6 0a3 3 0 0 1 6 0z M21 16a3 3 0 1 1-6 0a3 3 0 0 1 6 0z'],
       ['Pads', 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z'],
       ['Mix', 'M6 4v16 M12 4v16 M18 4v16 M4 15h4 M10 8h4 M16 13h4'],
-      ['Setlist', 'M9 6h11 M9 12h11 M9 18h7 M4 6h.01 M4 12h.01 M4 18h.01']
+      ['Parts', 'M12 3l9 5-9 5-9-5z M3 13l9 5 9-5'],
+      ['Song', 'M9 6h11 M9 12h11 M9 18h7 M4 6h.01 M4 12h.01 M4 18h.01']
     ];
     const prog = [['E/G#', '1/3'], ['B', '5'], ['A', '4'], ['Bsus4', '5sus']];
     let page = 0, ci = 1, beat = 0, droneOn = false, ticker = null;
@@ -422,36 +414,41 @@
     TABS.forEach(([name, d], i) => {
       const b = document.createElement('button');
       b.type = 'button'; b.setAttribute('role', 'tab');
-      b.innerHTML = `<span><svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d="${d}"/></svg></span>${name}`;
+      b.innerHTML = `<svg class="ico" width="19" height="19" viewBox="0 0 24 24"><path d="${d}"/></svg>${name}`;
       b.addEventListener('click', () => { page = i; render(); });
       tabbar.appendChild(b);
     });
 
-    const row = (label, v, db) => `<div class="mix-row" style="grid-template-columns:56px 1fr 52px"><span>${label}</span><div class="slider"><i style="width:${v * 100}%"></i><b style="left:${v * 100}%"></b></div><span class="mono">${db}</span></div>`;
+    const vf = (label, v, db, on) => `<div class="vf"><span class="lbl2 ${on ? 'on' : ''}">${label}</span><div class="vtrack" style="min-height:150px"><i style="height:${v * 100}%"></i><b style="bottom:${v * 100}%"></b></div><span class="num">${db}</span></div>`;
+    const pvf = (label, v) => `<div class="vf"><div class="vtrack" style="min-height:150px"><i style="height:${v * 100}%"></i><b style="bottom:${v * 100}%;width:20px;margin-left:-10px;height:14px"></b></div><span class="lbl2" style="font-size:9.5px">${label}</span></div>`;
     function pageHtml() {
       if (page === 0) {
-        const c = prog[ci], n = prog[(ci + 1) % 4];
+        const c = prog[ci], n = prog[(ci + 1) % 4], frac = beat / 4;
         return `
-        <div class="ph-card">
-          <div class="ph-top"><span class="chip chip-accent">Chorus</span><span class="chip mono">Bar ${ci + 1}/4</span></div>
+        <div class="ph-card" style="padding:10px 18px 14px">
+          <div class="lbl" style="text-align:center">Playing</div>
           <div class="ph-chord">${c[0]}</div>
           <div class="ph-nash"><span class="nash">${c[1]}</span></div>
         </div>
-        <div class="ph-card"><div class="ph-next">NEXT <strong>${n[0]}</strong><span class="warm">${4 - beat} beats</span></div><div class="ph-bar"><i style="width:${(beat / 4) * 100}%"></i></div></div>
-        <div class="ph-card ph-drone"><span><span class="status-dot ${droneOn ? '' : 'idle'}" style="margin-right:8px"></span>Ambient drone pad</span><button class="switch" id="phDrone" type="button" role="switch" aria-checked="${droneOn}" aria-label="Drone pad"></button></div>`;
+        <div class="ph-card ph-nextrow"><div class="ring"><svg viewBox="0 0 56 56"><circle class="t" cx="28" cy="28" r="24"/><circle class="p" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="${(150.8 * frac).toFixed(1)}"/></svg><b>${4 - beat}</b></div><div><span class="lbl">Next</span><strong>${n[0]}</strong></div></div>
+        <div class="ph-card" style="padding:12px 16px"><div class="ph-drone"><span><b>Drone pad</b><span class="faint">${droneOn ? 'On' : 'Off'}</span></span><button class="switch" id="phDrone" type="button" role="switch" aria-checked="${droneOn}" aria-label="Drone pad"></button></div>
+        <div class="ph-rootkeys">${['C', 'C♯', 'D', 'E♭', 'E', 'F'].map((k, i) => `<span class="${i === 4 ? 'on' : ''}">${k}</span>`).join('')}</div></div>`;
       }
       if (page === 1) {
-        const pads = BANKS.A[2].slice(0, 6).map(([nm], i) => `<div class="fx-pad-btn" style="--c:${padColor(i)}"><span class="pn">A${i + 1}</span><span class="pl">${nm}</span></div>`).join('');
-        return `<div class="label" style="margin:2px 0 4px">Bank A · Percussion</div><div class="ph-pads">${pads}</div>`;
+        return `<div class="ph-pads">${BANKS.A[2].slice(0, 6).map(([nm], i) => `<div class="fx-pad-btn" style="--pc:${padColor(i)}"><span class="pn">A${i + 1}</span><span class="pl">${nm}</span></div>`).join('')}</div>`;
       }
       if (page === 2) {
-        return `<div class="ph-card ph-mix"><div class="label">Mixer</div>${row('Track', .78, '-0.9')}${row('Synth', .7, '-6.3')}${row('FX pads', .55, '-11.7')}${row('Drone', .4, '-18.0')}${row('Master', .86, '1.8')}</div>`;
+        return `<div class="ph-faders">${vf('Track', .72, '-1.9')}${vf('Synth', .9, '0.0')}${vf('FX Pads', .55, '-1.4')}${vf('Master', .9, '0.0', true)}</div>`;
+      }
+      if (page === 3) {
+        const v = [.7, .55, .62, .48, .66, .4, .58, .3];
+        return `<div class="ph-faders parts">${v.map((x, i) => pvf('P' + (i + 1), x)).join('')}</div>`;
       }
       const songs = [['Opening Song', 'G · 72'], ['Slow Build', 'C · 64'], ['Your Song', 'E · 72'], ['Closing Anthem', 'A · 76']];
-      return `<div class="label" style="margin:2px 0 4px">Setlist · ${songs.length} songs</div>` +
-        songs.map((x, i) => `<div class="ph-song ${i === 2 ? 'on' : ''}"><span class="status-dot ${i === 2 ? '' : 'idle'}"></span>${x[0]}<span class="mono">${x[1]}</span></div>`).join('');
+      return songs.map((x, i) => `<div class="ph-song ${i === 2 ? 'on' : ''}">${x[0]}<span class="num">${x[1]}</span></div>`).join('');
     }
     function render() {
+      title.textContent = TABS[page][0];
       [...tabbar.children].forEach((b, i) => { b.classList.toggle('on', i === page); b.setAttribute('aria-selected', i === page); });
       screen.innerHTML = pageHtml();
       const dr = $('phDrone');
