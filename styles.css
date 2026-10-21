@@ -101,7 +101,6 @@ html[data-theme="light"] .card, html[data-theme="light"] .studio-panel { box-sha
 
 /* ───── Hero ───── */
 .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: center; padding-top: 56px; padding-bottom: 64px; position: relative; }
-.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--accent-ink); background: var(--tint); border-radius: var(--r-full); padding: 6px 14px; margin-bottom: 22px; }
 h1 { font-size: clamp(38px, 4.8vw, 62px); line-height: 1.03; letter-spacing: -.045em; font-weight: 700; }
 .lead { margin-top: 20px; font-size: 18px; color: var(--ink2); max-width: 520px; line-height: 1.55; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
