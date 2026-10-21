@@ -16,6 +16,27 @@
     if (e.target.tagName === 'A') { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
   });
 
+  /* ───────────── Theme (light / dark, same tokens as the app) ───────────── */
+  const SUN = 'M12 16a4 4 0 1 0 0-8a4 4 0 0 0 0 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4';
+  const MOON = 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+  const themeBtn = $('themeToggle');
+  const root = document.documentElement;
+  const cssVar = (n) => getComputedStyle(root).getPropertyValue(n).trim();
+  const themeListeners = [];
+  function paintThemeBtn() {
+    const dark = root.getAttribute('data-theme') !== 'light';
+    themeBtn.innerHTML = `<svg class="ico" width="17" height="17" viewBox="0 0 24 24"><path d="${dark ? SUN : MOON}"/></svg>`;
+    themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  themeBtn.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('litwave-theme', next); } catch (e) {}
+    paintThemeBtn();
+    themeListeners.forEach((f) => f());
+  });
+  paintThemeBtn();
+
   /* Pause expensive loops while off-screen */
   function whenVisible(el, onChange) {
     if (!('IntersectionObserver' in window)) { onChange(true); return; }
@@ -43,22 +64,14 @@
 
   /* ───────────── Hero studio recreation ───────────── */
   (function hero() {
-    const canvas = $('heroWaveCanvas');
-    const wave = $('heroWave');
-    const playhead = $('heroPlayhead');
-    const loop = $('heroLoop');
-    const dot = $('heroDot');
-    const timeEl = $('heroTime');
-    const btn = $('heroPlay');
-    const label = $('heroPlayLabel');
-    const icon = $('heroPlayIcon');
-    const G = 7;
-    const LOOP_A = 0.30, LOOP_B = 0.54, TOTAL = 228;
-    const prog = PROGRESSIONS[0].chords;
+    const canvas = $('heroWaveCanvas'), wave = $('heroWave'), playhead = $('heroPlayhead'), loop = $('heroLoop');
+    const timeEl = $('heroTime'), btn = $('heroPlay'), icon = $('heroPlayIcon');
+    const LOOP_A = 0.36, LOOP_B = 0.52, TOTAL = 276;
+    const PLAY = 'M7 4.5v15l12.5-7.5z', PAUSE = 'M6 5h4.5v14H6z M13.5 5H18v14h-4.5z';
+    // chorus of the app's demo song, in E major
+    const prog = [['E/G#', '1/3'], ['B', '5'], ['A', '4'], ['Bsus4', '5sus']];
 
-    // deterministic pseudo-random envelope, shaped like song sections
-    const N = 220;
-    const env = [];
+    const N = 200, env = [];
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < N; i++) {
@@ -73,52 +86,56 @@
       const ctx = canvas.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      const bw = w / N;
+      const bw = w / N, accent = cssVar('--accent'), base = cssVar('--wave');
+      const mid = h / 2;
       for (let i = 0; i < N; i++) {
-        const t = i / N;
-        const inLoop = t >= LOOP_A && t <= LOOP_B;
-        const bh = env[i] * (h * .78);
-        ctx.fillStyle = inLoop ? 'rgba(56,189,248,.85)' : 'rgba(156,163,175,.45)';
-        ctx.fillRect(i * bw, (h - bh) / 2 + 6, Math.max(1, bw - 1), bh);
+        const t = i / N, played = t < pos;
+        const bh = Math.max(3, env[i] * (h * .8));
+        ctx.fillStyle = played ? accent : base;
+        const x = i * bw + 1, bwid = Math.max(1.5, bw - 2);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, mid - bh / 2, bwid, bh, 1.5); else ctx.rect(x, mid - bh / 2, bwid, bh);
+        ctx.fill();
       }
     }
-    drawWave();
-    window.addEventListener('resize', drawWave);
     loop.style.left = LOOP_A * 100 + '%';
     loop.style.width = (LOOP_B - LOOP_A) * 100 + '%';
 
-    const chordEl = $('heroChord'), nextEl = $('heroNext'), nashEl = $('heroNash'), nashNextEl = $('heroNashNext');
-    const mm = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + (s % 60).toFixed(2).padStart(5, '0');
+    const chordEl = $('heroChord'), nextEl = $('heroNext'), nashEl = $('heroNash'), nashNextEl = $('heroNashNext'), barEl = $('heroBar'), beatsEl = $('heroBeats');
+    const mm = (sec) => String(Math.floor(sec / 60)).padStart(2, '0') + ':' + (sec % 60).toFixed(1).padStart(4, '0');
 
-    let pos = LOOP_A + .02, playing = !reduceMotion, visible = true, last = 0, lastIdx = -1;
+    let pos = LOOP_A + .03, playing = !reduceMotion, visible = true, last = 0, lastIdx = -1, lastDraw = 0;
     function render() {
-      playhead.style.left = pos * 100 + '%';
-      timeEl.textContent = mm(pos * TOTAL) + ' / ' + mm(TOTAL);
+      playhead.style.left = `calc(${pos * 100}% - 1px)`;
+      timeEl.innerHTML = `${mm(pos * TOTAL)} <i>/ ${mm(TOTAL)}</i>`;
       const span = (pos - LOOP_A) / (LOOP_B - LOOP_A);
       const idx = Math.min(3, Math.max(0, Math.floor(span * 4)));
+      const beat = 4 - Math.min(3, Math.floor(((span * 4) % 1) * 4));
+      beatsEl.textContent = beat + (beat === 1 ? ' beat' : ' beats');
       if (idx !== lastIdx) {
         lastIdx = idx;
         const c = prog[idx], n = prog[(idx + 1) % 4];
-        chordEl.textContent = chordName(G, c); nashEl.textContent = c.n;
-        nextEl.textContent = chordName(G, n); nashNextEl.textContent = n.n;
+        chordEl.textContent = c[0]; nashEl.textContent = c[1];
+        nextEl.textContent = n[0]; nashNextEl.textContent = n[1];
+        barEl.textContent = `Chorus · bar ${idx + 1}/4`;
       }
     }
     function setPlaying(p) {
       playing = p;
-      label.textContent = p ? 'Pause' : 'Play';
-      icon.innerHTML = p ? '<rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/>' : '<polygon points="6 3 20 12 6 21"/>';
-      dot.classList.toggle('idle', !p);
+      icon.innerHTML = `<path d="${p ? PAUSE : PLAY}"/>`;
     }
     btn.addEventListener('click', () => setPlaying(!playing));
     setPlaying(playing);
-    render();
+    drawWave(); render();
+    window.addEventListener('resize', drawWave);
+    themeListeners.push(drawWave);
 
-    // mixer meters
-    const meters = document.querySelectorAll('#heroMixer .fader-group');
-    meters.forEach((g) => {
+    // mixer sliders
+    const rows = [...document.querySelectorAll('#heroMixer .mix-row')];
+    rows.forEach((g) => {
       const v = parseFloat(g.dataset.v);
-      g.querySelector('.fader-fill').style.height = v * 100 + '%';
-      g.querySelector('.fader-thumb').style.bottom = `calc(${v * 100}% - 3px)`;
+      g.querySelector('.slider i').style.width = v * 100 + '%';
+      g.querySelector('.slider b').style.left = v * 100 + '%';
     });
 
     function frame(ts) {
@@ -126,14 +143,15 @@
       if (!visible) { last = ts; return; }
       const dt = Math.min(.1, (ts - last) / 1000); last = ts;
       if (playing) {
-        pos += (dt * .8) / TOTAL;
+        pos += (dt * 1.1) / TOTAL;
         if (pos > LOOP_B) pos = LOOP_A;
         render();
+        if (ts - lastDraw > 120) { lastDraw = ts; drawWave(); }
       }
-      meters.forEach((g, i) => {
+      rows.forEach((g, i) => {
         const base = parseFloat(g.dataset.v);
-        const m = playing ? base * (.45 + .5 * Math.abs(Math.sin(ts / (260 + i * 90) + i))) : 0.04;
-        g.querySelector('.meter').style.height = Math.min(96, m * 100) + '%';
+        const m = playing ? base * (.4 + .55 * Math.abs(Math.sin(ts / (260 + i * 90) + i))) : 0.03;
+        g.querySelector('.slider em').style.width = Math.min(100, m * 100) + '%';
       });
     }
     whenVisible($('heroStudio'), (v) => { visible = v; });
@@ -231,16 +249,7 @@
     E: ['pad', 'click', 'click', 'thump', 'noise', 'noise', 'drop', 'sweep'],
     F: ['stab', 'glitch', 'down', 'drop', 'chime', 'click', 'pad', 'noise']
   };
-  const PALETTE = [
-    ['#ef4444', 'rgba(239,68,68,.4)', 'linear-gradient(135deg, rgba(239,68,68,.25), rgba(185,28,28,.4))'],
-    ['#f97316', 'rgba(249,115,22,.4)', 'linear-gradient(135deg, rgba(249,115,22,.25), rgba(194,65,12,.4))'],
-    ['#eab308', 'rgba(234,179,8,.4)', 'linear-gradient(135deg, rgba(234,179,8,.25), rgba(161,98,7,.4))'],
-    ['#22c55e', 'rgba(34,197,94,.4)', 'linear-gradient(135deg, rgba(34,197,94,.25), rgba(21,128,61,.4))'],
-    ['#06b6d4', 'rgba(6,182,212,.4)', 'linear-gradient(135deg, rgba(6,182,212,.25), rgba(14,116,144,.4))'],
-    ['#3b82f6', 'rgba(59,130,246,.4)', 'linear-gradient(135deg, rgba(59,130,246,.25), rgba(29,78,216,.4))'],
-    ['#a855f7', 'rgba(168,85,247,.4)', 'linear-gradient(135deg, rgba(168,85,247,.25), rgba(126,34,206,.4))'],
-    ['#ec4899', 'rgba(236,72,153,.4)', 'linear-gradient(135deg, rgba(236,72,153,.25), rgba(190,24,93,.4))']
-  ];
+  const padColor = (i) => `var(--p${(i % 6) + 1})`;
 
   function noiseBuf(dur) {
     const n = Math.floor(ctx.sampleRate * dur), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
@@ -289,7 +298,7 @@
   }
 
   (function pads() {
-    const tabs = $('bankTabs'), grid = $('padGrid'), dot = $('padDot');
+    const tabs = $('bankTabs'), grid = $('padGrid');
     let bank = 'A';
     Object.keys(BANKS).forEach((k) => {
       const b = document.createElement('button');
@@ -302,10 +311,9 @@
       $('bankName').textContent = `Bank ${bank} · ${BANKS[bank][1]}`;
       grid.innerHTML = '';
       BANKS[bank][2].forEach(([name, sample], i) => {
-        const pal = PALETTE[i % 8];
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'fx-pad-btn';
-        b.style.setProperty('--pad-border', pal[0]); b.style.setProperty('--pad-glow', pal[1]); b.style.setProperty('--pad-bg', pal[2]);
+        b.style.setProperty('--c', padColor(i));
         b.innerHTML = `<span class="pn">${bank}${i + 1}</span><span class="pl">${name}</span>`;
         b.addEventListener('pointerdown', (e) => { e.preventDefault(); trigger(b, bank, i, sample); });
         b.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); trigger(b, bank, i, sample); } });
@@ -313,8 +321,7 @@
       });
     }
     function trigger(el, k, i, sample) {
-      el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 140);
-      dot.classList.remove('idle');
+      el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
       if (!audio()) return;
       Object.keys(BANKS).forEach((bk) => BANKS[bk][2].forEach((p) => { if (p[1]) loadSample(p[1]); }));
       if (sample && buffers[sample]) playSample(buffers[sample]);
@@ -381,11 +388,11 @@
       requestAnimationFrame(draw);
       if (!visible) return;
       c2.clearRect(0, 0, w, h);
-      c2.strokeStyle = 'rgba(255,255,255,.05)'; c2.lineWidth = 1; c2.beginPath();
+      c2.strokeStyle = cssVar('--line'); c2.lineWidth = 1; c2.beginPath();
       for (let x = 0; x <= w; x += w / 8) { c2.moveTo(x, 0); c2.lineTo(x, h); }
       for (let y = 0; y <= h; y += h / 4) { c2.moveTo(0, y); c2.lineTo(w, y); }
       c2.stroke();
-      c2.strokeStyle = '#38bdf8'; c2.lineWidth = 1.6; c2.shadowColor = 'rgba(56,189,248,.8)'; c2.shadowBlur = 8; c2.beginPath();
+      c2.strokeStyle = cssVar('--accent'); c2.lineWidth = 2; c2.shadowColor = cssVar('--accent-glow'); c2.shadowBlur = 8; c2.beginPath();
       if (analyser) {
         analyser.getByteTimeDomainData(data);
         // find a rising zero crossing so the trace holds still
@@ -402,53 +409,57 @@
 
   /* ───────────── Phone stage remote ───────────── */
   (function phone() {
-    const screen = $('phoneScreen'), title = $('phoneTitle'), dots = $('phoneDots');
-    const TITLES = ['STAGE: CHORDS & PAD', 'STAGE: FX PADS', 'STAGE: PART 1-8 FADERS', 'STAGE: SONG MANAGER', 'STAGE: MIXER'];
-    let page = 0, ci = 0, droneOn = false, ticker = null;
-    for (let i = 0; i < 5; i++) dots.appendChild(document.createElement('i'));
+    const screen = $('phoneScreen'), tabbar = $('tabbar');
+    const TABS = [
+      ['Stage', 'M9 18V5l12-2v13 M9 18a3 3 0 1 1-6 0a3 3 0 0 1 6 0z M21 16a3 3 0 1 1-6 0a3 3 0 0 1 6 0z'],
+      ['Pads', 'M4 4h7v7H4z M13 4h7v7h-7z M4 13h7v7H4z M13 13h7v7h-7z'],
+      ['Mix', 'M6 4v16 M12 4v16 M18 4v16 M4 15h4 M10 8h4 M16 13h4'],
+      ['Setlist', 'M9 6h11 M9 12h11 M9 18h7 M4 6h.01 M4 12h.01 M4 18h.01']
+    ];
+    const prog = [['E/G#', '1/3'], ['B', '5'], ['A', '4'], ['Bsus4', '5sus']];
+    let page = 0, ci = 1, beat = 0, droneOn = false, ticker = null;
 
-    const fader = (label, v) => `<div class="ph-fader"><div class="fader-track"><div class="fader-fill" style="height:${v * 100}%"></div><div class="fader-thumb" style="bottom:calc(${v * 100}% - 3px)"></div></div><span>${label}</span></div>`;
+    TABS.forEach(([name, d], i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'tab');
+      b.innerHTML = `<span><svg class="ico" width="18" height="18" viewBox="0 0 24 24"><path d="${d}"/></svg></span>${name}`;
+      b.addEventListener('click', () => { page = i; render(); });
+      tabbar.appendChild(b);
+    });
+
+    const row = (label, v, db) => `<div class="mix-row" style="grid-template-columns:56px 1fr 52px"><span>${label}</span><div class="slider"><i style="width:${v * 100}%"></i><b style="left:${v * 100}%"></b></div><span class="mono">${db}</span></div>`;
     function pageHtml() {
-      const prog = PROGRESSIONS[0].chords, c = prog[ci], n = prog[(ci + 1) % 4];
-      if (page === 0) return `
-        <div class="ph-box"><div class="ph-row"><span>Song key</span><span class="custom-select-dark">Key: C</span></div></div>
-        <div class="ph-center">
-          <span class="ph-label">Playing chord</span>
-          <div class="ph-chord">${chordName(0, c)}</div>
-          <div class="ph-nash">[ ${c.n} ]</div>
-          <div class="ph-next">NEXT<b>${chordName(0, n)}</b></div>
+      if (page === 0) {
+        const c = prog[ci], n = prog[(ci + 1) % 4];
+        return `
+        <div class="ph-card">
+          <div class="ph-top"><span class="chip chip-accent">Chorus</span><span class="chip mono">Bar ${ci + 1}/4</span></div>
+          <div class="ph-chord">${c[0]}</div>
+          <div class="ph-nash"><span class="nash">${c[1]}</span></div>
         </div>
-        <div class="ph-box"><div class="ph-row"><span><span class="status-dot ${droneOn ? '' : 'idle'}" style="margin-right:7px"></span>Ambient drone pad</span><button class="btn ${droneOn ? '' : 'btn-primary'}" id="phDrone" type="button">${droneOn ? 'STOP' : 'START'}</button></div>
-        <div class="ph-slider"><i style="width:75%"></i></div></div>`;
+        <div class="ph-card"><div class="ph-next">NEXT <strong>${n[0]}</strong><span class="warm">${4 - beat} beats</span></div><div class="ph-bar"><i style="width:${(beat / 4) * 100}%"></i></div></div>
+        <div class="ph-card ph-drone"><span><span class="status-dot ${droneOn ? '' : 'idle'}" style="margin-right:8px"></span>Ambient drone pad</span><button class="switch" id="phDrone" type="button" role="switch" aria-checked="${droneOn}" aria-label="Drone pad"></button></div>`;
+      }
       if (page === 1) {
-        const pads = BANKS.A[2].map(([nm], i) => `<div class="fx-pad-btn" style="--pad-border:${PALETTE[i][0]};--pad-glow:${PALETTE[i][1]};--pad-bg:${PALETTE[i][2]}"><span class="pn">A${i + 1}</span><span class="pl">${nm}</span></div>`).join('');
-        return `<div class="ph-row" style="margin-bottom:8px"><span>Bank A · Percussion</span><span>A B C D E F</span></div><div class="ph-pads">${pads}</div>`;
+        const pads = BANKS.A[2].slice(0, 6).map(([nm], i) => `<div class="fx-pad-btn" style="--c:${padColor(i)}"><span class="pn">A${i + 1}</span><span class="pl">${nm}</span></div>`).join('');
+        return `<div class="label" style="margin:2px 0 4px">Bank A · Percussion</div><div class="ph-pads">${pads}</div>`;
       }
       if (page === 2) {
-        const v = [.7, .55, .62, .48, .66, .4, .58, .3];
-        return `<div class="ph-row" style="margin-bottom:6px"><span>Sound parts</span><span>Part 1–8</span></div><div class="ph-faders">${v.map((x, i) => fader('P' + (i + 1), x)).join('')}</div>`;
+        return `<div class="ph-card ph-mix"><div class="label">Mixer</div>${row('Track', .78, '-0.9')}${row('Synth', .7, '-6.3')}${row('FX pads', .55, '-11.7')}${row('Drone', .4, '-18.0')}${row('Master', .86, '1.8')}</div>`;
       }
-      if (page === 3) {
-        const songs = [['Opening Song', 'G · 72'], ['Slow Build', 'C · 64'], ['Bridge Reprise', 'A · 68'], ['Closing Anthem', 'E · 76']];
-        return `<div class="ph-row" style="margin-bottom:8px"><span>Setlist</span><span>${songs.length} songs</span></div>` +
-          songs.map((s, i) => `<div class="ph-song ${i === 0 ? 'on' : ''}"><span class="status-dot ${i === 0 ? '' : 'idle'}"></span>${s[0]}<span class="mono">${s[1]}</span></div>`).join('');
-      }
-      return `<div class="ph-row" style="margin-bottom:6px"><span>Output mixer</span><span>EQ Flat</span></div><div class="ph-faders" style="grid-template-columns:repeat(4,1fr)">${fader('TRACK', .62)}${fader('SYNTH', .78)}${fader('FX PADS', .5)}${fader('MASTER', .72)}</div>`;
+      const songs = [['Opening Song', 'G · 72'], ['Slow Build', 'C · 64'], ['Your Song', 'E · 72'], ['Closing Anthem', 'A · 76']];
+      return `<div class="label" style="margin:2px 0 4px">Setlist · ${songs.length} songs</div>` +
+        songs.map((x, i) => `<div class="ph-song ${i === 2 ? 'on' : ''}"><span class="status-dot ${i === 2 ? '' : 'idle'}"></span>${x[0]}<span class="mono">${x[1]}</span></div>`).join('');
     }
     function render() {
-      title.textContent = TITLES[page];
-      [...dots.children].forEach((d, i) => d.classList.toggle('on', i === page));
+      [...tabbar.children].forEach((b, i) => { b.classList.toggle('on', i === page); b.setAttribute('aria-selected', i === page); });
       screen.innerHTML = pageHtml();
       const dr = $('phDrone');
       if (dr) dr.addEventListener('click', () => { droneOn = !droneOn; render(); });
     }
-    function go(d) { page = (page + d + 5) % 5; render(); }
-    $('phonePrev').addEventListener('click', () => go(-1));
-    $('phoneNext').addEventListener('click', () => go(1));
-
     function run(on) {
       clearInterval(ticker);
-      if (on && !reduceMotion) ticker = setInterval(() => { ci = (ci + 1) % 4; if (page === 0) render(); }, 2400);
+      if (on && !reduceMotion) ticker = setInterval(() => { beat++; if (beat > 3) { beat = 0; ci = (ci + 1) % 4; } if (page === 0) render(); }, 600);
     }
     whenVisible($('phone'), run);
     render();
